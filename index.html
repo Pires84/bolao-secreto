@@ -31,9 +31,12 @@
     </div>
 
     <div id="painel-admin" class="hidden fixed top-0 right-0 p-2 z-50">
-        <div class="bg-gray-800 p-2 rounded-lg text-xs shadow-xl border border-gray-600 flex flex-col gap-1">
-            <p class="mb-1 text-gray-400 font-bold text-center">ADMIN</p>
-            <button id="btnAdminRevelar" class="bg-yellow-600 px-2 py-1 rounded text-white hover:bg-yellow-500">Revelar Resultado</button>
+        <div class="bg-gray-800 p-3 rounded-xl text-xs shadow-2xl border border-gray-600 flex flex-col gap-2 w-32">
+            <p class="text-gray-400 font-bold text-center border-b border-gray-600 pb-1">ADMIN</p>
+            <button id="btnAdminRevelar" class="bg-yellow-600 px-2 py-2 rounded text-white hover:bg-yellow-500 font-bold">🏆 Revelar</button>
+            <button onclick="excluirSala()" class="bg-red-900/80 border border-red-500 text-red-300 px-2 py-2 rounded hover:bg-red-900 flex items-center justify-center gap-2">
+                <i class="fa-solid fa-trash"></i> Excluir Sala
+            </button>
         </div>
     </div>
 
@@ -81,7 +84,7 @@
                 <input type="number" id="cQtd" value="5" class="input-dark text-center" placeholder="Pessoas">
                 <input type="number" id="cValor" value="10" class="input-dark text-center" placeholder="Valor R$">
             </div>
-            <input type="text" id="cPix" placeholder="Chave Pix" class="input-dark">
+            <input type="text" id="cPix" placeholder="Chave Pix (Email/CPF)" class="input-dark">
             
             <button id="btnCriarFinal" class="w-full bg-green-500 hover:bg-green-400 text-white font-bold py-4 rounded-xl mt-4 shadow-lg active:scale-95">GERAR SALA 🎲</button>
             <button onclick="nav('tela-home')" class="w-full text-gray-400 text-sm py-2 hover:text-white">Voltar</button>
@@ -151,6 +154,8 @@
             </div>
         </div>
 
+        <p class="text-[10px] text-center text-gray-500 mb-2 italic">Dica: Toque no seu palpite para editar (se o tempo permitir)</p>
+
         <div id="lista-participantes" class="space-y-3 pb-24"></div>
     </div>
 
@@ -190,7 +195,8 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-        import { getFirestore, doc, setDoc, getDoc, onSnapshot, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+        // ADICIONADO: deleteDoc
+        import { getFirestore, doc, setDoc, getDoc, onSnapshot, updateDoc, arrayUnion, deleteDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
         // CHAVES FIREBASE (AS MESMAS):
         const firebaseConfig = {
@@ -225,21 +231,31 @@
             }
         });
 
-        // --- ATUALIZAÇÃO DO CRONÔMETRO (INTELIGENTE) ---
+        // --- EXCLUIR SALA (NOVO) ---
+        window.excluirSala = async () => {
+            if(confirm("⚠️ TEM CERTEZA? \nIsso apagará a sala e todos os palpites permanentemente. Ninguém mais poderá acessar.")) {
+                try {
+                    await deleteDoc(doc(db, "salas", codigoSala));
+                    alert("Sala excluída com sucesso.");
+                    window.sairDaConta();
+                } catch(e) {
+                    alert("Erro ao excluir: " + e.message);
+                }
+            }
+        }
+
+        // --- CRONÔMETRO INTELIGENTE ---
         function atualizarCronometro() {
             if(!dadosSala || dadosSala.status === 'REVELADO') return;
-            
             const agora = Date.now();
             const prazo = dadosSala.prazo || 0;
             const diff = prazo - agora;
-
             const statusTexto = document.getElementById('status-texto');
             const statusIcon = document.getElementById('status-icon');
             const statusBar = document.getElementById('status-bar');
 
             if (diff <= 0) {
-                statusTexto.innerText = "Tempo Esgotado! 🛑";
-                statusIcon.innerText = "🔒";
+                statusTexto.innerText = "Tempo Esgotado! 🛑"; statusIcon.innerText = "🔒";
                 statusBar.className = "bg-red-500/20 text-red-400 text-center text-sm py-3 rounded-lg mb-4 font-bold border border-red-500/30 flex justify-center gap-2";
                 return;
             }
@@ -250,18 +266,8 @@
                 const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
                 const seconds = Math.floor((diff % (1000 * 60)) / 1000);
                 
-                let display = "";
-                // LÓGICA DE EXIBIÇÃO INTELIGENTE
-                if (days > 0) {
-                    // Mais de 24h: Mostra Dias e Horas (Sem segundos)
-                    display = `Encerra em: ${days} dias, ${hours}h ${minutes}m`;
-                } else {
-                    // Menos de 24h: Mostra Horas, Min e Seg (Pânico)
-                    display = `Encerra em: ${hours}h ${minutes}m ${seconds}s`;
-                }
-                
-                statusTexto.innerText = display;
-                statusIcon.innerText = "⏳";
+                let display = days > 0 ? `Encerra em: ${days} dias, ${hours}h ${minutes}m` : `Encerra em: ${hours}h ${minutes}m ${seconds}s`;
+                statusTexto.innerText = display; statusIcon.innerText = "⏳";
                 statusBar.className = "bg-green-500/20 text-green-400 text-center text-sm py-3 rounded-lg mb-4 font-bold border border-green-500/30 flex justify-center gap-2";
             }
         }
@@ -306,7 +312,7 @@
                     const dados = docSnap.data();
                     const userExistente = dados.participantes.find(p => p.nome.toUpperCase() === nome.toUpperCase());
                     if(userExistente) {
-                        if(confirm(`Olá ${userExistente.nome}! Você já tem conta. Entrar?`)) {
+                        if(confirm(`Olá ${userExistente.nome}! Entrar na sua conta?`)) {
                             entrarNaSala(codigo, userExistente.id, userExistente.nome);
                         } else { mostrarLoading(false); alert("Nome em uso."); }
                     } else {
@@ -451,7 +457,6 @@
                 calcularEExibirRanking();
                 return;
             }
-            
             renderLista();
         }
 
@@ -474,10 +479,19 @@
                 let btnAdminPag = '';
                 if(meuId === 0) btnAdminPag = `<button onclick="window.alternarPagamento(${p.id})" class="ml-2 text-[10px] px-2 py-1 rounded border ${p.pago ? 'border-green-500 text-green-400 bg-green-900/30' : 'border-gray-500 text-gray-400 bg-gray-800'} hover:bg-white/10 transition-colors">${p.pago ? 'Pago' : 'Validar'}</button>`;
 
+                // Visualização de Palpite + Edição
                 let htmlPalpite = `<span class="text-2xl text-gray-600">?</span>`;
-                if(alvo) htmlPalpite = `<div class="flex items-center gap-2">${getAvatarHTML(alvo.avatar, "small")} <span class="font-bold text-green-400 truncate text-sm">${alvo.nome}</span></div>`;
+                if(alvo) {
+                    htmlPalpite = `
+                        <div class="flex items-center gap-2">
+                            ${getAvatarHTML(alvo.avatar, "small")} 
+                            <span class="font-bold text-green-400 truncate text-sm">${alvo.nome}</span>
+                            ${!bloqueado && p.id === meuId ? '<i class="fa-solid fa-pencil text-gray-500 text-[10px] ml-1"></i>' : ''}
+                        </div>`;
+                }
 
                 let cls = 'cursor-default opacity-60'; let attr = '';
+                // PERMITE CLICAR PARA EDITAR SE NÃO BLOQUEADO
                 if(!bloqueado && p.id !== meuId) { cls = 'cursor-pointer hover:bg-white/10'; attr = `data-id="${p.id}"`; }
 
                 container.innerHTML += `
