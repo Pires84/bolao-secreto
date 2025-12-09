@@ -75,20 +75,28 @@
                 <span class="text-sm text-gray-300">Escolher Avatar</span>
             </div>
 
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="text-xs text-gray-400 ml-1 font-bold">Participantes</label>
+                    <input type="number" id="cQtd" value="5" class="input-dark text-center" oninput="calcularPremioAuto()">
+                </div>
+                <div>
+                    <label class="text-xs text-gray-400 ml-1 font-bold">Entrada (R$)</label>
+                    <input type="number" id="cValor" value="10" class="input-dark text-center" oninput="calcularPremioAuto()">
+                </div>
+            </div>
+
+            <div>
+                <label class="text-xs text-yellow-400 ml-1 font-bold uppercase">Valor do Prêmio Final (R$)</label>
+                <input type="number" id="cPremioTotal" class="input-dark font-bold text-yellow-400 border-yellow-500/50">
+            </div>
+
             <div>
                 <label class="text-xs text-gray-400 ml-1 uppercase font-bold">Prazo para Palpites</label>
                 <input type="datetime-local" id="cDataLimite" class="input-dark text-sm">
             </div>
 
-            <div class="grid grid-cols-2 gap-4">
-                <input type="number" id="cQtd" value="5" class="input-dark text-center" placeholder="Pessoas">
-                <input type="number" id="cValor" value="10" class="input-dark text-center" placeholder="Valor R$">
-            </div>
-            
-            <div>
-                <label class="text-xs text-gray-400 ml-1 uppercase font-bold">Sua Chave PIX (Se você ganhar)</label>
-                <input type="text" id="cUserPix" placeholder="CPF / Email / Celular" class="input-dark">
-            </div>
+            <input type="text" id="cPix" placeholder="Sua Chave Pix (Email/CPF)" class="input-dark">
             
             <button id="btnCriarFinal" class="w-full bg-green-500 hover:bg-green-400 text-white font-bold py-4 rounded-xl mt-4 shadow-lg active:scale-95">GERAR SALA 🎲</button>
             <button onclick="nav('tela-home')" class="w-full text-gray-400 text-sm py-2 hover:text-white">Voltar</button>
@@ -108,7 +116,7 @@
             </div>
 
             <div>
-                <label class="text-xs text-gray-400 ml-1 uppercase font-bold">Sua Chave PIX (Se você ganhar)</label>
+                <label class="text-xs text-gray-400 ml-1 uppercase font-bold">Sua Chave PIX</label>
                 <input type="text" id="eUserPix" placeholder="CPF / Email / Celular" class="input-dark">
             </div>
 
@@ -137,10 +145,9 @@
                 </div>
                 <div class="text-right">
                     <div class="text-green-400 font-bold text-xl" id="dPremio">R$ 0</div>
-                    <div class="text-[10px] text-gray-400 uppercase">Potencial</div>
+                    <div class="text-[10px] text-gray-400 uppercase">Prêmio Final</div>
                 </div>
             </div>
-            
             <div class="mt-4 relative z-10">
                 <button id="btnCompartilhar" class="hidden w-full bg-indigo-600 hover:bg-indigo-500 py-2 rounded-lg text-xs text-white font-bold flex items-center justify-center gap-2"><i class="fa-brands fa-whatsapp text-lg"></i> Convidar Amigos</button>
             </div>
@@ -170,12 +177,7 @@
         <p class="text-[10px] text-center text-gray-500 mb-2 italic">Dica: Toque no seu palpite para editar (se o tempo permitir)</p>
 
         <div id="lista-participantes" class="space-y-3 pb-24">
-            <div id="aviso-vazio" class="hidden text-center py-10 opacity-50">
-                <i class="fa-solid fa-user-group text-4xl mb-2"></i>
-                <p>Aguardando participantes...</p>
-                <p class="text-xs">O link foi compartilhado?</p>
             </div>
-        </div>
     </div>
 
     <div id="tela-ranking" class="hidden max-w-md mx-auto p-4 page-enter">
@@ -208,22 +210,17 @@
             <div class="space-y-4 text-sm text-gray-300">
                 <div class="bg-black/20 p-3 rounded-lg border-l-4 border-indigo-500">
                     <p class="font-bold text-white mb-1">💸 Pagamento</p>
-                    <p>Ao final do jogo, a <strong>chave PIX do Vencedor</strong> será revelada na tela de ranking.</p>
-                    <p class="mt-1 text-xs text-gray-400">Todos os participantes devem transferir o valor combinado diretamente para a conta do campeão.</p>
+                    <p>Ao final do jogo, a <strong>chave PIX do Vencedor</strong> será revelada na tela de ranking. Todos os participantes devem transferir o valor combinado para ele.</p>
                 </div>
-
                 <div class="bg-black/20 p-3 rounded-lg border-l-4 border-green-500">
                     <p class="font-bold text-white mb-1">📊 Pontuação</p>
-                    <p>Cada palpite correto vale <strong>1 Ponto</strong>.</p>
-                    <p class="mt-1 text-xs text-gray-400">Você deve adivinhar "Quem tirou Quem". Quem somar mais pontos no final, leva o prêmio todo!</p>
+                    <p>Cada palpite correto vale <strong>1 Ponto</strong>. Você deve adivinhar "Quem tirou Quem".</p>
                 </div>
-
                 <div class="bg-black/20 p-3 rounded-lg border-l-4 border-yellow-500">
                     <p class="font-bold text-white mb-1">⏳ Prazo e Edição</p>
                     <p>Você pode mudar seus palpites à vontade até o tempo acabar.</p>
                 </div>
             </div>
-
             <button onclick="document.getElementById('modal-regras').classList.add('hidden')" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl mt-6">Entendi!</button>
         </div>
     </div>
@@ -285,7 +282,15 @@
                 document.getElementById('label-retomar').innerText = `Como: ${dados.nome}`;
                 document.getElementById('area-logout').classList.remove('hidden');
             }
+            calcularPremioAuto(); // Inicia com valor padrão
         });
+
+        // --- CÁLCULO AUTO DO PRÊMIO ---
+        window.calcularPremioAuto = () => {
+            const qtd = document.getElementById('cQtd').value || 0;
+            const valor = document.getElementById('cValor').value || 0;
+            document.getElementById('cPremioTotal').value = (qtd * valor).toFixed(2);
+        }
 
         // --- REGRAS ---
         window.abrirRegras = () => { document.getElementById('modal-regras').classList.remove('hidden'); }
@@ -301,7 +306,7 @@
             }
         }
 
-        // --- CRONÔMETRO (ATUALIZADO) ---
+        // --- CRONÔMETRO ---
         function atualizarCronometro() {
             if(!dadosSala || dadosSala.status === 'REVELADO') return;
             const agora = Date.now();
@@ -321,8 +326,8 @@
                 const days = Math.floor(diff / (1000 * 60 * 60 * 24));
                 const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
                 const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-                
-                let display = days > 0 ? `Encerra em: ${days} dias, ${hours}h ${minutes}m` : `Encerra em: ${hours}h ${minutes}m`;
+                const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+                let display = days > 0 ? `Encerra em: ${days} dias, ${hours}h ${minutes}m` : `Encerra em: ${hours}h ${minutes}m ${seconds}s`;
                 statusTexto.innerText = display; statusIcon.innerText = "⏳";
                 statusBar.className = "bg-green-500/20 text-green-400 text-center text-sm py-3 rounded-lg mb-4 font-bold border border-green-500/30 flex justify-center gap-2";
             }
@@ -411,10 +416,11 @@
             const admin = document.getElementById('cNomeAdmin').value;
             const qtd = parseInt(document.getElementById('cQtd').value);
             const valor = parseFloat(document.getElementById('cValor').value);
+            const premioTotal = document.getElementById('cPremioTotal').value; // Valor manual
             const dataLimite = document.getElementById('cDataLimite').value;
-            const pix = document.getElementById('cUserPix').value;
+            const pix = document.getElementById('cPix').value;
 
-            if(!nome || !admin || !dataLimite || !pix) return alert("Preencha tudo!");
+            if(!nome || !admin || !dataLimite || !pix || !premioTotal) return alert("Preencha tudo!");
             mostrarLoading(true);
 
             const prazoTimestamp = new Date(dataLimite).getTime();
@@ -427,6 +433,7 @@
             try {
                 await setDoc(doc(db, "salas", codigo), {
                     admin, nomeEvento: nome, qtdMax: qtd, valor,
+                    premioFinal: premioTotal, // SALVA O VALOR FIXO
                     prazo: prazoTimestamp,
                     status: "PALPITES", gabarito,
                     participantes: [adminUser]
@@ -515,10 +522,9 @@
         }
 
         function atualizarTelaJogo() {
-            // CORREÇÃO PRÊMIO POTENCIAL (TRAVADO)
-            const premioTotal = dadosSala.valor * dadosSala.qtdMax; // Usa qtdMax definida no início
+            // MOSTRA O PRÊMIO FIXO DEFINIDO NA CRIAÇÃO
             document.getElementById('dNomeEvento').innerText = dadosSala.nomeEvento;
-            document.getElementById('dPremio').innerText = `R$ ${premioTotal.toFixed(2)}`;
+            document.getElementById('dPremio').innerText = `R$ ${parseFloat(dadosSala.premioFinal || 0).toFixed(2)}`;
             
             const eu = dadosSala.participantes.find(p => p.id === meuId);
             if(eu) {
@@ -560,14 +566,6 @@
         function renderLista() {
             const container = document.getElementById('lista-participantes'); container.innerHTML = '';
             
-            // VERIFICA SE A LISTA ESTÁ VAZIA (SÓ EU)
-            if (dadosSala.participantes.length <= 1) {
-                document.getElementById('aviso-vazio').classList.remove('hidden');
-                // Não retorna, deixa renderizar o próprio card
-            } else {
-                document.getElementById('aviso-vazio').classList.add('hidden');
-            }
-
             const eu = dadosSala.participantes.find(p => p.id === meuId);
             const palpites = eu ? eu.palpites : {};
             
