@@ -1,0 +1,21 @@
+{
+  "name": "Bolão Amigo Secreto",
+  "short_name": "Bolão",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#2D1B4E",
+  "theme_color": "#2D1B4E",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ]
+}
