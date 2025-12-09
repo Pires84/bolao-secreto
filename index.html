@@ -86,7 +86,7 @@
             </div>
             
             <div>
-                <label class="text-xs text-gray-400 ml-1 uppercase font-bold">Sua Chave PIX (Para receber se ganhar)</label>
+                <label class="text-xs text-gray-400 ml-1 uppercase font-bold">Sua Chave PIX (Para receber)</label>
                 <input type="text" id="cUserPix" placeholder="CPF / Email / Celular" class="input-dark">
             </div>
             
@@ -108,7 +108,7 @@
             </div>
 
             <div>
-                <label class="text-xs text-gray-400 ml-1 uppercase font-bold">Sua Chave PIX (Para receber se ganhar)</label>
+                <label class="text-xs text-gray-400 ml-1 uppercase font-bold">Sua Chave PIX (Para receber)</label>
                 <input type="text" id="eUserPix" placeholder="CPF / Email / Celular" class="input-dark">
             </div>
 
@@ -134,7 +134,7 @@
                 </div>
                 <div class="text-right">
                     <div class="text-green-400 font-bold text-xl" id="dPremio">R$ 0</div>
-                    <div class="text-[10px] text-gray-400 uppercase">Acumulado</div>
+                    <div class="text-[10px] text-gray-400 uppercase">Potencial</div>
                 </div>
             </div>
             
@@ -156,10 +156,6 @@
                     <p id="meuNomeDisplay" class="font-bold text-white leading-none">...</p>
                 </div>
             </div>
-            <div class="bg-indigo-950 px-3 py-1 rounded-lg border border-indigo-800 text-right">
-                <p class="text-[10px] text-gray-400">PAGAMENTO</p>
-                <p id="meuStatusPagamento" class="font-bold text-gray-400 text-xs">Pendente 🕒</p>
-            </div>
         </div>
 
         <p class="text-[10px] text-center text-gray-500 mb-2 italic">Dica: Toque no seu palpite para editar (se o tempo permitir)</p>
@@ -172,12 +168,13 @@
             <h2 class="text-3xl font-display text-yellow-400">Resultado</h2>
         </div>
         
-        <div id="area-vencedor-pix" class="bg-green-500/10 border border-green-500/50 p-4 rounded-xl mb-6 text-center hidden">
-            <p class="text-xs text-green-300 uppercase mb-1">👑 Prêmio para o Campeão</p>
-            <p class="text-white text-sm mb-2">Chave Pix de <span id="nome-vencedor" class="font-bold">...</span></p>
-            <div onclick="copiarPixVencedor()" class="bg-black/40 p-2 rounded text-yellow-400 font-mono text-lg cursor-pointer flex items-center justify-center gap-2">
+        <div id="area-vencedor-pix" class="bg-gradient-to-r from-green-900 to-green-800 border border-green-500/50 p-4 rounded-xl mb-6 text-center shadow-lg transform hover:scale-105 transition-all hidden">
+            <p class="text-xs text-green-300 uppercase mb-1 font-bold">🏆 PIX DO CAMPEÃO</p>
+            <p class="text-white text-lg font-bold mb-2" id="nome-vencedor">...</p>
+            <div onclick="copiarPixVencedor()" class="bg-black/40 p-3 rounded-lg text-yellow-400 font-mono text-sm cursor-pointer flex items-center justify-center gap-2 border border-white/10 active:bg-black/60">
                 <span id="pix-vencedor-chave">...</span> <i class="fa-regular fa-copy"></i>
             </div>
+            <p class="text-[10px] text-green-200 mt-2">Clique para copiar e pagar!</p>
         </div>
 
         <div id="podio-area" class="flex justify-center items-end gap-2 mb-8 h-40"></div>
@@ -247,9 +244,9 @@
             }
         });
 
-        // --- EXCLUIR SALA ---
+        // --- FUNÇÕES DE ADMINISTRAÇÃO (EXCLUIR) ---
         window.excluirSala = async () => {
-            if(confirm("⚠️ TEM CERTEZA? \nIsso apagará a sala permanentemente.")) {
+            if(confirm("⚠️ ATENÇÃO: Isso apaga a sala para sempre. Continuar?")) {
                 try {
                     await deleteDoc(doc(db, "salas", codigoSala));
                     alert("Sala excluída.");
@@ -258,35 +255,7 @@
             }
         }
 
-        // --- CRONÔMETRO INTELIGENTE ---
-        function atualizarCronometro() {
-            if(!dadosSala || dadosSala.status === 'REVELADO') return;
-            const agora = Date.now();
-            const prazo = dadosSala.prazo || 0;
-            const diff = prazo - agora;
-            const statusTexto = document.getElementById('status-texto');
-            const statusIcon = document.getElementById('status-icon');
-            const statusBar = document.getElementById('status-bar');
-
-            if (diff <= 0) {
-                statusTexto.innerText = "Tempo Esgotado! 🛑"; statusIcon.innerText = "🔒";
-                statusBar.className = "bg-red-500/20 text-red-400 text-center text-sm py-3 rounded-lg mb-4 font-bold border border-red-500/30 flex justify-center gap-2";
-                return;
-            }
-
-            if (dadosSala.status === 'PALPITES') {
-                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-                const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-                const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-                
-                let display = days > 0 ? `Encerra em: ${days} dias, ${hours}h ${minutes}m` : `Encerra em: ${hours}h ${minutes}m ${seconds}s`;
-                statusTexto.innerText = display; statusIcon.innerText = "⏳";
-                statusBar.className = "bg-green-500/20 text-green-400 text-center text-sm py-3 rounded-lg mb-4 font-bold border border-green-500/30 flex justify-center gap-2";
-            }
-        }
-
-        // --- COMPRESSOR ---
+        // --- COMPRESSÃO IMAGEM ---
         window.processarImagem = (input) => {
             const file = input.files[0];
             if (!file) return;
@@ -313,13 +282,35 @@
             reader.readAsDataURL(file);
         };
 
-        // --- ENTRAR (SALVA PIX) ---
+        // --- COBRANÇA DO VENCEDOR ---
+        window.cobrarCaloteiro = (nomeDevedor, celular) => {
+            const texto = `Ei ${nomeDevedor}! Perdeu no bolão, agora paga o campeão! 💸 O valor é R$${dadosSala.valor}.`;
+            const url = `https://wa.me/?text=${encodeURIComponent(texto)}`; // Abre lista de contatos
+            window.open(url, '_blank');
+        };
+
+        window.confirmarRecebimento = async (idPagante) => {
+            if(confirm("Confirma que recebeu o pagamento deste jogador?")) {
+                const novaLista = [...dadosSala.participantes];
+                const idx = novaLista.findIndex(p => p.id === idPagante);
+                novaLista[idx].pago = true;
+                try { await updateDoc(doc(db, "salas", codigoSala), { participantes: novaLista }); }
+                catch(e) { alert("Erro ao confirmar."); }
+            }
+        };
+
+        window.copiarPixVencedor = () => {
+            const pix = document.getElementById('pix-vencedor-chave').innerText;
+            navigator.clipboard.writeText(pix);
+            alert("Chave PIX copiada! Abra seu banco.");
+        }
+
+        // --- ENTRAR ---
         document.getElementById('btnEntrarFinal').addEventListener('click', async () => {
             const codigo = document.getElementById('eCodigo').value.trim().toUpperCase();
             const nome = document.getElementById('eNome').value.trim();
             const pix = document.getElementById('eUserPix').value.trim();
-            
-            if(!codigo || !nome || !pix) return alert("Preencha todos os campos e sua chave PIX!");
+            if(!codigo || !nome || !pix) return alert("Preencha tudo!");
             mostrarLoading(true, "Verificando...");
             const docRef = doc(db, "salas", codigo);
             try {
@@ -328,7 +319,7 @@
                     const dados = docSnap.data();
                     const userExistente = dados.participantes.find(p => p.nome.toUpperCase() === nome.toUpperCase());
                     if(userExistente) {
-                        if(confirm(`Olá ${userExistente.nome}! Entrar na conta existente?`)) {
+                        if(confirm(`Olá ${userExistente.nome}! Entrar na conta?`)) {
                             entrarNaSala(codigo, userExistente.id, userExistente.nome);
                         } else { mostrarLoading(false); alert("Nome em uso."); }
                     } else {
@@ -342,7 +333,7 @@
             } catch(e) { mostrarLoading(false); alert("Erro: " + e.message); }
         });
 
-        // --- CRIAR (SALVA PIX ADMIN) ---
+        // --- CRIAR ---
         document.getElementById('btnCriarFinal').addEventListener('click', async () => {
             const nome = document.getElementById('cNomeEvento').value;
             const admin = document.getElementById('cNomeAdmin').value;
@@ -372,6 +363,7 @@
             } catch (error) { mostrarLoading(false); alert("Erro: " + error.message); }
         });
 
+        // --- AVATAR ---
         const emojisList = ["🎅", "🤶", "🦌", "⛄", "🎁", "🎄", "👽", "🦄", "🐶", "🐱", "🦁", "🐼", "😎", "🤠", "🤖", "👻", "💩", "💀", "🤡", "👹"];
         const coresList = ["bg-red-500", "bg-green-500", "bg-blue-500", "bg-purple-600", "bg-yellow-500", "bg-pink-500", "bg-gray-600"];
         window.abrirPersonalizacao = (origem) => {
@@ -417,15 +409,7 @@
             return `<div class="${cls} ${av.cor} rounded-full flex items-center justify-center shadow border border-white/20 overflow-hidden text-white relative">${content}</div>`;
         }
 
-        window.alternarPagamento = async (idAlvo) => {
-            if(meuId !== 0) return; 
-            const novaLista = [...dadosSala.participantes];
-            const idx = novaLista.findIndex(p => p.id === idAlvo);
-            novaLista[idx].pago = !novaLista[idx].pago;
-            try { await updateDoc(doc(db, "salas", codigoSala), { participantes: novaLista }); }
-            catch(e) { alert("Erro ao atualizar pagamento."); }
-        }
-
+        // --- LÓGICA DO JOGO ---
         function entrarNaSala(codigo, id, nome) {
             codigoSala = codigo; meuId = id; meuNome = nome;
             localStorage.setItem('bolao_sessao', JSON.stringify({ codigo, id, nome }));
@@ -441,19 +425,42 @@
             timerInterval = setInterval(atualizarCronometro, 1000);
         }
 
+        function atualizarCronometro() {
+            if(!dadosSala || dadosSala.status === 'REVELADO') return;
+            const agora = Date.now();
+            const prazo = dadosSala.prazo || 0;
+            const diff = prazo - agora;
+            const statusTexto = document.getElementById('status-texto');
+            const statusIcon = document.getElementById('status-icon');
+            const statusBar = document.getElementById('status-bar');
+
+            if (diff <= 0) {
+                statusTexto.innerText = "Tempo Esgotado! 🛑"; statusIcon.innerText = "🔒";
+                statusBar.className = "bg-red-500/20 text-red-400 text-center text-sm py-3 rounded-lg mb-4 font-bold border border-red-500/30 flex justify-center gap-2";
+                return;
+            }
+
+            if (dadosSala.status === 'PALPITES') {
+                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+                let display = days > 0 ? `Encerra em: ${days} dias, ${hours}h ${minutes}m` : `Encerra em: ${hours}h ${minutes}m ${seconds}s`;
+                statusTexto.innerText = display; statusIcon.innerText = "⏳";
+                statusBar.className = "bg-green-500/20 text-green-400 text-center text-sm py-3 rounded-lg mb-4 font-bold border border-green-500/30 flex justify-center gap-2";
+            }
+        }
+
         function atualizarTelaJogo() {
-            const pagantes = dadosSala.participantes.filter(p => p.pago).length;
             document.getElementById('dNomeEvento').innerText = dadosSala.nomeEvento;
-            document.getElementById('dPremio').innerText = `R$ ${(dadosSala.valor * pagantes).toFixed(2)}`;
+            document.getElementById('dPremio').innerText = `R$ ${(dadosSala.valor * dadosSala.participantes.length).toFixed(2)}`;
             
             const eu = dadosSala.participantes.find(p => p.id === meuId);
             if(eu) {
                 document.getElementById('meuNomeDisplay').innerText = eu.nome;
                 document.getElementById('meuAvatar').innerHTML = getAvatarHTML(eu.avatar, "medium").replace(/w-\d+ h-\d+ text-\w+/, "w-full h-full text-xl");
                 document.getElementById('meuAvatar').className = "w-10 h-10 rounded-full flex items-center justify-center shadow-lg cursor-pointer hover:scale-110 transition-transform overflow-hidden";
-                const statusEl = document.getElementById('meuStatusPagamento');
-                if(eu.pago) { statusEl.innerText = "Confirmado ✅"; statusEl.className = "font-bold text-green-400 text-xs"; }
-                else { statusEl.innerText = "Pendente 🕒"; statusEl.className = "font-bold text-yellow-400 text-xs"; }
+                document.getElementById('meuStatusPagamento').style.display = 'none'; // Esconde status no lobby agora
             }
 
             if(meuId === 0) {
@@ -476,10 +483,6 @@
             const container = document.getElementById('lista-participantes'); container.innerHTML = '';
             const eu = dadosSala.participantes.find(p => p.id === meuId);
             const palpites = eu ? eu.palpites : {};
-            let possivel = Math.max(0, dadosSala.participantes.length - 1);
-            let feitos = 0;
-            for (const [k, v] of Object.entries(palpites)) { if (dadosSala.participantes.some(p => p.id == k)) feitos++; }
-            
             const tempoEsgotado = Date.now() > (dadosSala.prazo || 0);
             const bloqueado = tempoEsgotado || dadosSala.status !== 'PALPITES';
 
@@ -487,10 +490,7 @@
                 const pid = palpites[p.id]; 
                 const alvo = pid !== undefined ? dadosSala.participantes.find(x => x.id === pid) : null;
                 const avHtml = getAvatarHTML(p.avatar, "small");
-                let badgePago = p.pago ? `<div class="badge-pago">✔</div>` : '';
-                let btnAdminPag = '';
-                if(meuId === 0) btnAdminPag = `<button onclick="window.alternarPagamento(${p.id})" class="ml-2 text-[10px] px-2 py-1 rounded border ${p.pago ? 'border-green-500 text-green-400 bg-green-900/30' : 'border-gray-500 text-gray-400 bg-gray-800'} hover:bg-white/10 transition-colors">${p.pago ? 'Pago' : 'Validar'}</button>`;
-
+                
                 let htmlPalpite = `<span class="text-2xl text-gray-600">?</span>`;
                 if(alvo) {
                     htmlPalpite = `<div class="flex items-center gap-2">${getAvatarHTML(alvo.avatar, "small")} <span class="font-bold text-green-400 truncate text-sm">${alvo.nome}</span>${!bloqueado && p.id === meuId ? '<i class="fa-solid fa-pencil text-gray-500 text-[10px] ml-1"></i>' : ''}</div>`;
@@ -502,8 +502,8 @@
                 container.innerHTML += `
                     <div class="bg-white/5 border border-white/10 rounded-2xl p-3 flex items-center justify-between transition-all">
                         <div class="flex items-center gap-3 w-1/2 relative">
-                            <div class="relative">${avHtml}${badgePago}</div>
-                            <div class="flex flex-col"><div class="flex items-center"><span class="font-bold ${p.pago ? 'text-green-200' : 'text-gray-400'} truncate text-sm">${p.nome}</span>${btnAdminPag}</div></div>
+                            <div class="relative">${avHtml}</div>
+                            <div class="flex flex-col"><div class="flex items-center"><span class="font-bold text-gray-200 truncate text-sm">${p.nome}</span></div></div>
                         </div>
                         <div class="text-gray-500">➜</div>
                         <div class="w-1/2 relative group ${cls} card-palpite" ${attr}>
@@ -542,32 +542,62 @@
         window.nav = (t) => { document.querySelectorAll('.page-enter').forEach(el => el.classList.add('hidden')); document.getElementById(t).classList.remove('hidden'); };
         function mostrarLoading(show, txt="...") { document.getElementById('loading').classList.toggle('hidden', !show); document.getElementById('loading-text').innerText = txt; }
         document.getElementById('btnCompartilhar').addEventListener('click', async () => { const txt = `🎁 Bolão Amigo Secreto!\nCódigo: *${codigoSala}*\nLink: ${window.location.href}`; if (navigator.share) try { await navigator.share({ title: 'Bolão', text: txt, url: window.location.href }); } catch (err) {} else { navigator.clipboard.writeText(txt); alert("Copiado!"); } });
-        
-        // MOSTRAR PIX DO VENCEDOR
-        window.copiarPixVencedor = () => {
-            const pix = document.getElementById('pix-vencedor-chave').innerText;
-            navigator.clipboard.writeText(pix);
-            alert("Chave do Vencedor Copiada!");
-        }
+        window.copiarCodigo = () => { navigator.clipboard.writeText(codigoSala); alert("Código copiado!"); }
+        window.copiarPixVencedor = () => { const pix = document.getElementById('pix-vencedor-chave').innerText; navigator.clipboard.writeText(pix); alert("Chave PIX copiada!"); }
 
         function calcularEExibirRanking() {
             window.nav('tela-ranking'); const c = document.getElementById('lista-ranking'); const podio = document.getElementById('podio-area'); c.innerHTML = '';
-            let rk = []; dadosSala.participantes.forEach(p => { let pts = 0; if(p.palpites) { for (const [k, v] of Object.entries(p.palpites)) { if(parseInt(v) === dadosSala.gabarito[k]) pts++; } } rk.push({ nome: p.nome, pontos: pts, palpites: p.palpites, avatar: p.avatar, pix: p.pix }); });
+            let rk = []; dadosSala.participantes.forEach(p => { let pts = 0; if(p.palpites) { for (const [k, v] of Object.entries(p.palpites)) { if(parseInt(v) === dadosSala.gabarito[k]) pts++; } } rk.push({ id: p.id, nome: p.nome, pontos: pts, palpites: p.palpites, avatar: p.avatar, pix: p.pix, pago: p.pago }); });
             rk.sort((a,b) => b.pontos - a.pontos);
 
-            // EXIBE PIX DO VENCEDOR
+            // LOGICA DO VENCEDOR
             const vencedor = rk[0];
-            if(vencedor && vencedor.pix) {
+            const amITheWinner = meuId === vencedor.id;
+            
+            // Se houver pix do vencedor, mostra para todos (exceto o próprio vencedor)
+            if(vencedor && vencedor.pix && !amITheWinner) {
                 document.getElementById('area-vencedor-pix').classList.remove('hidden');
                 document.getElementById('nome-vencedor').innerText = vencedor.nome;
                 document.getElementById('pix-vencedor-chave').innerText = vencedor.pix;
             }
 
             podio.innerHTML = `<div class="flex flex-col items-center"><div class="text-3xl mb-1">🥈</div><div class="bg-gray-400/20 p-2 rounded-t-lg h-24 flex flex-col items-center justify-end font-bold w-20 text-sm text-gray-300 gap-1">${getAvatarHTML(rk[1]?.avatar, "small")}<span>${rk[1]?.nome.split(' ')[0] || '-'}</span></div></div><div class="flex flex-col items-center -mt-4"><div class="text-4xl mb-1">🥇</div><div class="bg-yellow-400/20 border-2 border-yellow-400 p-2 rounded-t-lg h-32 flex flex-col items-center justify-end font-bold text-yellow-400 w-24 shadow-[0_0_15px_rgba(250,204,21,0.3)] gap-1">${getAvatarHTML(rk[0]?.avatar, "small")}<span>${rk[0]?.nome.split(' ')[0] || '-'}</span></div></div><div class="flex flex-col items-center"><div class="text-3xl mb-1">🥉</div><div class="bg-orange-700/20 p-2 rounded-t-lg h-16 flex flex-col items-center justify-end font-bold w-20 text-sm text-orange-300 gap-1">${getAvatarHTML(rk[2]?.avatar, "small")}<span>${rk[2]?.nome.split(' ')[0] || '-'}</span></div></div>`;
+            
             rk.forEach((r, idx) => {
+                let badgePago = r.pago ? `<span class="bg-green-500/20 text-green-400 text-[10px] px-2 py-1 rounded border border-green-500/50">Pago ✅</span>` : `<span class="bg-red-500/20 text-red-400 text-[10px] px-2 py-1 rounded border border-red-500/50">Devendo 🤡</span>`;
+                
+                // Botões de Ação para o Vencedor
+                let winnerControls = '';
+                if(amITheWinner && r.id !== meuId) {
+                    winnerControls = `
+                        <div class="flex gap-2 mt-2 justify-end">
+                            <button onclick="window.cobrarCaloteiro('${r.nome}')" class="bg-red-600/80 text-white text-xs px-3 py-1 rounded hover:bg-red-500 flex items-center gap-1"><i class="fa-brands fa-whatsapp"></i> Cobrar</button>
+                            <button onclick="window.confirmarRecebimento(${r.id})" class="bg-green-600/80 text-white text-xs px-3 py-1 rounded hover:bg-green-500 flex items-center gap-1"><i class="fa-solid fa-check"></i> Recebi</button>
+                        </div>
+                    `;
+                }
+
                 let det = '<div class="mt-4 grid grid-cols-1 gap-2 bg-black/20 p-3 rounded-xl">';
                 dadosSala.participantes.forEach(p => { const pf = r.palpites ? r.palpites[p.id] : undefined; const ok = parseInt(pf) === dadosSala.gabarito[p.id]; const chutado = dadosSala.participantes.find(x=>x.id == pf)?.nome || "?"; det += `<div class="flex justify-between text-xs border-b border-white/5 pb-1"><span class="text-gray-400">${p.nome} tirou...</span><span class="${ok?'text-green-400 font-bold':'text-red-400'}">${chutado} ${ok?'✅':'❌'}</span></div>`; }); det += '</div>';
-                c.innerHTML += `<details class="bg-white/5 border border-white/10 rounded-2xl overflow-hidden group"><summary class="p-4 flex items-center justify-between hover:bg-white/5 transition-colors"><div class="flex items-center gap-3"><div class="text-gray-500 font-bold w-6 text-center">${idx+1}º</div>${getAvatarHTML(r.avatar, "small")}<div class="font-bold text-gray-200">${r.nome}</div></div><div class="flex items-center gap-3"><span class="font-bold text-xl text-yellow-400">${r.pontos}</span><div class="text-xs text-gray-500">pts</div></div></summary><div class="px-4 pb-4">${det}</div></details>`;
+                
+                c.innerHTML += `
+                    <details class="bg-white/5 border border-white/10 rounded-2xl overflow-hidden group">
+                        <summary class="p-4 flex items-center justify-between hover:bg-white/5 transition-colors">
+                            <div class="flex items-center gap-3">
+                                <div class="text-gray-500 font-bold w-6 text-center">${idx+1}º</div>
+                                ${getAvatarHTML(r.avatar, "small")}
+                                <div>
+                                    <div class="font-bold text-gray-200">${r.nome}</div>
+                                    ${badgePago}
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3"><span class="font-bold text-xl text-yellow-400">${r.pontos}</span><div class="text-xs text-gray-500">pts</div></div>
+                        </summary>
+                        <div class="px-4 pb-4">
+                            ${winnerControls}
+                            ${det}
+                        </div>
+                    </details>`;
             });
         }
     </script>
