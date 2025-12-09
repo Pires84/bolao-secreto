@@ -7,6 +7,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2D1B4E">
+<link rel="apple-touch-icon" href="icon-192.png">
     
     <style>
         body { font-family: 'Nunito', sans-serif; background-color: #2D1B4E; color: #F5F5F5; }
@@ -688,5 +691,15 @@
             });
         }
     </script>
+    <script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js')
+        .then(reg => console.log('PWA registrado!', reg))
+        .catch(err => console.log('Erro PWA:', err));
+    });
+  }
+</script>
 </body>
 </html>
+
