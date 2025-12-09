@@ -84,7 +84,11 @@
                 <input type="number" id="cQtd" value="5" class="input-dark text-center" placeholder="Pessoas">
                 <input type="number" id="cValor" value="10" class="input-dark text-center" placeholder="Valor R$">
             </div>
-            <input type="text" id="cPix" placeholder="Chave Pix (Email/CPF)" class="input-dark">
+            
+            <div>
+                <label class="text-xs text-gray-400 ml-1 uppercase font-bold">Sua Chave PIX (Se você ganhar)</label>
+                <input type="text" id="cUserPix" placeholder="CPF / Email / Celular" class="input-dark">
+            </div>
             
             <button id="btnCriarFinal" class="w-full bg-green-500 hover:bg-green-400 text-white font-bold py-4 rounded-xl mt-4 shadow-lg active:scale-95">GERAR SALA 🎲</button>
             <button onclick="nav('tela-home')" class="w-full text-gray-400 text-sm py-2 hover:text-white">Voltar</button>
@@ -104,7 +108,7 @@
             </div>
 
             <div>
-                <label class="text-xs text-gray-400 ml-1 uppercase font-bold">Sua Chave PIX (Para receber)</label>
+                <label class="text-xs text-gray-400 ml-1 uppercase font-bold">Sua Chave PIX (Se você ganhar)</label>
                 <input type="text" id="eUserPix" placeholder="CPF / Email / Celular" class="input-dark">
             </div>
 
@@ -147,9 +151,7 @@
             <div id="status-texto">Carregando...</div>
         </div>
 
-        <button id="btn-ver-resultado-lobby" onclick="verResultado()" class="hidden w-full bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400 text-white font-bold text-xl py-4 rounded-xl shadow-lg mb-6 animate-bounce">
-            🏆 VER RESULTADO FINAL
-        </button>
+        <button id="btn-ver-resultado-lobby" onclick="verResultado()" class="hidden w-full bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400 text-white font-bold text-xl py-4 rounded-xl shadow-lg mb-6 animate-bounce">🏆 VER RESULTADO FINAL</button>
 
         <div class="flex justify-between items-center mb-4 bg-white/5 p-2 rounded-xl border border-white/5">
             <div class="flex items-center gap-3">
@@ -160,14 +162,20 @@
                 </div>
             </div>
             <div class="bg-indigo-950 px-3 py-1 rounded-lg border border-indigo-800 text-right">
-                <p class="text-[10px] text-gray-400">PAGAMENTO</p>
-                <p id="meuStatusPagamento" class="font-bold text-gray-400 text-xs">Pendente 🕒</p>
+                <p class="text-[10px] text-gray-400">STATUS</p>
+                <p id="meuStatusPagamento" class="font-bold text-gray-400 text-xs">...</p>
             </div>
         </div>
 
         <p class="text-[10px] text-center text-gray-500 mb-2 italic">Dica: Toque no seu palpite para editar (se o tempo permitir)</p>
 
-        <div id="lista-participantes" class="space-y-3 pb-24"></div>
+        <div id="lista-participantes" class="space-y-3 pb-24">
+            <div id="aviso-vazio" class="hidden text-center py-10 opacity-50">
+                <i class="fa-solid fa-user-group text-4xl mb-2"></i>
+                <p>Ainda estás sozinho...</p>
+                <p class="text-xs">Convida a galera para começar!</p>
+            </div>
+        </div>
     </div>
 
     <div id="tela-ranking" class="hidden max-w-md mx-auto p-4 page-enter">
@@ -186,41 +194,46 @@
 
         <div id="podio-area" class="flex justify-center items-end gap-2 mb-8 h-40"></div>
         <div id="lista-ranking" class="space-y-3 pb-10"></div>
-        
-        <button onclick="nav('tela-jogo')" class="w-full bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 rounded-xl shadow-lg border border-gray-500">
-            <i class="fa-solid fa-arrow-left"></i> Voltar ao Lobby
-        </button>
+        <button onclick="nav('tela-jogo')" class="w-full bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 rounded-xl shadow-lg border border-gray-500 mb-4"><i class="fa-solid fa-arrow-left"></i> Voltar ao Lobby</button>
     </div>
 
     <div id="modal-regras" class="fixed inset-0 bg-black/90 hidden z-[80] flex items-center justify-center p-4">
         <div class="bg-gray-800 w-full max-w-sm rounded-2xl p-6 border border-white/10 relative max-h-[90vh] overflow-y-auto">
             <button onclick="document.getElementById('modal-regras').classList.add('hidden')" class="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl">&times;</button>
-            
             <div class="text-center mb-6">
                 <div class="inline-block bg-indigo-600 p-3 rounded-full mb-3"><i class="fa-solid fa-book text-2xl text-white"></i></div>
                 <h3 class="text-xl font-bold text-yellow-400">Regras do Jogo</h3>
             </div>
-
+            
             <div class="space-y-4 text-sm text-gray-300">
-                <div class="bg-black/20 p-3 rounded-lg">
+                 <div class="bg-black/20 p-3 rounded-lg border-l-4 border-green-500">
                     <p class="font-bold text-white mb-1">🎯 Objetivo</p>
-                    <p>Adivinhe quem cada pessoa tirou no Amigo Secreto. Quem acertar mais palpites ganha o prêmio acumulado!</p>
+                    <p>Acertar a maior quantidade de matchs</strong>.</p>
+                    <p class="mt-1 text-xs text-gray-400">Adivinhe quem cada pessoa tirou no Amigo Secreto. Quem acertar mais palpites ganha o prêmio acumulado!</p>
                 </div>
                 
-                <div class="bg-black/20 p-3 rounded-lg">
-                    <p class="font-bold text-white mb-1">💰 Pagamento</p>
-                    <p>Faça o PIX para o Admin e aguarde a validação. Apenas quem pagou concorre ao prêmio.</p>
+                <div class="bg-black/20 p-3 rounded-lg border-l-4 border-indigo-500">
+                    <p class="font-bold text-white mb-1">💸 Pagamento</p>
+                    <p>Ao final do jogo, a <strong>chave PIX do Vencedor</strong> será revelada na tela de ranking.</p>
+                    <p class="mt-1 text-xs text-gray-400">Todos os participantes devem transferir o valor combinado diretamente para a conta do campeão.</p>
                 </div>
 
-                <div class="bg-black/20 p-3 rounded-lg">
-                    <p class="font-bold text-white mb-1">⏳ Prazo</p>
-                    <p>Você pode editar seus palpites à vontade até o cronômetro zerar. Depois disso, tudo é bloqueado.</p>
+                <div class="bg-black/20 p-3 rounded-lg border-l-4 border-green-500">
+                    <p class="font-bold text-white mb-1">📊 Pontuação</p>
+                    <p>Cada palpite correto vale <strong>1 Ponto</strong>.</p>
+                    <p class="mt-1 text-xs text-gray-400">Você deve adivinhar "Quem tirou Quem". Quem somar mais pontos no final, leva o prêmio todo!</p>
                 </div>
 
-                <div class="bg-black/20 p-3 rounded-lg">
+                <div class="bg-black/20 p-3 rounded-lg border-l-4 border-yellow-500">
+                    <p class="font-bold text-white mb-1">⏳ Prazo e Edição</p>
+                    <p>Você pode mudar seus palpites à vontade até o cronômetro zerar. Depois disso, tudo é bloqueado.po acabar.</p>
+                </div>
+
+                <div class="bg-black/20 p-3 rounded-lg border-l-4 border-yellow-500">
                     <p class="font-bold text-white mb-1">🏆 Vencedor</p>
                     <p>Após a revelação, o sistema mostra o campeão. O valor do prêmio deve ser transferido diretamente para o PIX dele.</p>
                 </div>
+                
             </div>
 
             <button onclick="document.getElementById('modal-regras').classList.add('hidden')" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl mt-6">Entendi!</button>
@@ -240,7 +253,7 @@
             <h3 class="text-xl font-bold text-yellow-400 mb-4 text-center">Avatar</h3>
             <div class="flex justify-center mb-6"><div id="temp-avatar-preview" class="w-24 h-24 rounded-full border-4 border-indigo-500 flex items-center justify-center text-4xl bg-indigo-600 shadow-xl overflow-hidden relative">👤<div id="loading-upload" class="hidden absolute inset-0 bg-black/50 flex items-center justify-center"><div class="animate-spin text-white">⏳</div></div></div></div>
             <p class="text-xs text-gray-400 uppercase mb-2">Opção 1: Foto / Câmera</p>
-            <label class="w-full bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold py-3 rounded-xl flex items-center justify-center gap-2 cursor-pointer mb-4 transition-colors"><i class="fa-solid fa-camera"></i> Tirar Foto ou Galeria<input type="file" id="input-file-avatar" class="hidden" accept="image/*" onchange="processarImagem(this)"></label>
+            <label class="w-full bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold py-3 rounded-xl flex items-center justify-center gap-2 cursor-pointer mb-4 transition-colors"><i class="fa-solid fa-camera"></i> Foto / Galeria<input type="file" id="input-file-avatar" class="hidden" accept="image/*" onchange="processarImagem(this)"></label>
             <p class="text-xs text-gray-400 uppercase mb-2">Opção 2: Emojis</p>
             <div class="grid grid-cols-5 gap-2 mb-4" id="grid-emojis"></div>
             <p class="text-xs text-gray-400 uppercase mb-2">Cor de Fundo</p>
@@ -253,7 +266,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
         import { getFirestore, doc, setDoc, getDoc, onSnapshot, updateDoc, arrayUnion, deleteDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
-        // CHAVES FIREBASE:
+        // CHAVES FIREBASE (AS MESMAS):
         const firebaseConfig = {
             apiKey: "AIzaSyBenlc9jAuGq1zsbXuraG40Vzu0bu3PT0g",
             authDomain: "bolao-secreto.firebaseapp.com",
@@ -320,9 +333,8 @@
                 const days = Math.floor(diff / (1000 * 60 * 60 * 24));
                 const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
                 const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-                const seconds = Math.floor((diff % (1000 * 60)) / 1000);
                 
-                let display = days > 0 ? `Encerra em: ${days} dias, ${hours}h ${minutes}m` : `Encerra em: ${hours}h ${minutes}m ${seconds}s`;
+                let display = days > 0 ? `Encerra em: ${days} dias, ${hours}h ${minutes}m` : `Encerra em: ${hours}h ${minutes}m`;
                 statusTexto.innerText = display; statusIcon.innerText = "⏳";
                 statusBar.className = "bg-green-500/20 text-green-400 text-center text-sm py-3 rounded-lg mb-4 font-bold border border-green-500/30 flex justify-center gap-2";
             }
@@ -497,7 +509,6 @@
             mostrarLoading(false);
             window.nav('tela-jogo');
             
-            // VERIFICA SE É NOVO E MOSTRA REGRAS
             const jaViuRegras = localStorage.getItem(`regras_vistas_${codigo}`);
             if(!jaViuRegras) {
                 abrirRegras();
@@ -510,6 +521,8 @@
                 else { alert("Sala encerrada."); voltarAoMenu(); }
             });
             if(timerInterval) clearInterval(timerInterval);
+            // FORÇA A ATUALIZAÇÃO IMEDIATA DO CRONÔMETRO
+            atualizarCronometro(); 
             timerInterval = setInterval(atualizarCronometro, 1000);
         }
 
@@ -537,7 +550,6 @@
                 document.getElementById('btnCompartilhar').classList.add('hidden');
             }
 
-            // AQUI ESTÁ A CORREÇÃO DE UX: NÃO REDIRECIONA SOZINHO
             if (dadosSala.status === 'REVELADO') {
                 const statusBar = document.getElementById('status-bar');
                 statusBar.className = "bg-yellow-500/20 text-yellow-400 text-center text-sm py-3 rounded-lg mb-4 font-bold border border-yellow-500/30 flex justify-center gap-2";
@@ -558,6 +570,15 @@
 
         function renderLista() {
             const container = document.getElementById('lista-participantes'); container.innerHTML = '';
+            
+            // VERIFICA SE A LISTA ESTÁ VAZIA (SÓ EU)
+            if (dadosSala.participantes.length <= 1) {
+                document.getElementById('aviso-vazio').classList.remove('hidden');
+                return; // Para a execução aqui se estiver vazio
+            } else {
+                document.getElementById('aviso-vazio').classList.add('hidden');
+            }
+
             const eu = dadosSala.participantes.find(p => p.id === meuId);
             const palpites = eu ? eu.palpites : {};
             
