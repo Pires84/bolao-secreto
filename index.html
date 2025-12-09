@@ -18,6 +18,9 @@
         details > summary::-webkit-details-marker { display: none; }
         .avatar-img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
         .badge-pago { position: absolute; bottom: -2px; right: -2px; background: #22c55e; color: white; border-radius: 50%; width: 16px; height: 16px; font-size: 10px; display: flex; align-items: center; justify-content: center; border: 2px solid #2D1B4E; }
+        
+        /* Input de Data Customizado */
+        input[type="datetime-local"]::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; }
     </style>
 </head>
 <body class="bg-[#2D1B4E] min-h-screen pb-10">
@@ -32,8 +35,7 @@
     <div id="painel-admin" class="hidden fixed top-0 right-0 p-2 z-50">
         <div class="bg-gray-800 p-2 rounded-lg text-xs shadow-xl border border-gray-600 flex flex-col gap-1">
             <p class="mb-1 text-gray-400 font-bold text-center">ADMIN</p>
-            <button id="btnAdminBloquear" class="bg-red-600 px-2 py-1 rounded text-white hover:bg-red-500">Bloquear</button>
-            <button id="btnAdminRevelar" class="bg-yellow-600 px-2 py-1 rounded text-white hover:bg-yellow-500">Revelar</button>
+            <button id="btnAdminRevelar" class="bg-yellow-600 px-2 py-1 rounded text-white hover:bg-yellow-500">Revelar Resultado</button>
         </div>
     </div>
 
@@ -72,11 +74,17 @@
                 <span class="text-sm text-gray-300">Escolher Avatar</span>
             </div>
 
+            <div>
+                <label class="text-xs text-gray-400 ml-1 uppercase font-bold">Prazo para Palpites</label>
+                <input type="datetime-local" id="cDataLimite" class="input-dark text-sm">
+            </div>
+
             <div class="grid grid-cols-2 gap-4">
                 <input type="number" id="cQtd" value="5" class="input-dark text-center" placeholder="Pessoas">
                 <input type="number" id="cValor" value="10" class="input-dark text-center" placeholder="Valor R$">
             </div>
             <input type="text" id="cPix" placeholder="Chave Pix" class="input-dark">
+            
             <button id="btnCriarFinal" class="w-full bg-green-500 hover:bg-green-400 text-white font-bold py-4 rounded-xl mt-4 shadow-lg active:scale-95">GERAR SALA 🎲</button>
             <button onclick="nav('tela-home')" class="w-full text-gray-400 text-sm py-2 hover:text-white">Voltar</button>
         </div>
@@ -119,13 +127,17 @@
                     <div class="text-[10px] text-gray-400 uppercase">Acumulado</div>
                 </div>
             </div>
+            
             <div class="grid grid-cols-2 gap-2 mt-4 relative z-10">
                 <button id="btnCompartilhar" class="hidden bg-indigo-600 hover:bg-indigo-500 py-2 rounded-lg text-xs text-white font-bold flex items-center justify-center gap-2"><i class="fa-brands fa-whatsapp text-lg"></i> Convidar</button>
-                <button id="btnPix" class="col-span-2 bg-gray-700 hover:bg-gray-600 py-2 rounded-lg text-xs text-gray-200 flex items-center justify-center gap-2"><i class="fa-brands fa-pix"></i> Chave Pix</button>
+                <button id="btnPix" class="col-span-2 bg-gray-700 hover:bg-gray-600 py-2 rounded-lg text-xs text-gray-200 flex items-center justify-center gap-2"><i class="fa-brands fa-pix"></i> Copiar Chave Pix</button>
             </div>
         </div>
 
-        <div id="status-bar" class="bg-green-500/20 text-green-400 text-center text-sm py-2 rounded-lg mb-4 font-bold">Carregando...</div>
+        <div id="status-bar" class="bg-green-500/20 text-green-400 text-center text-sm py-3 rounded-lg mb-4 font-bold border border-green-500/30 flex justify-center items-center gap-2">
+            <div id="status-icon" class="animate-pulse">⏳</div>
+            <div id="status-texto">Carregando...</div>
+        </div>
 
         <div class="flex justify-between items-center mb-4 bg-white/5 p-2 rounded-xl border border-white/5">
             <div class="flex items-center gap-3">
@@ -136,7 +148,7 @@
                 </div>
             </div>
             <div class="bg-indigo-950 px-3 py-1 rounded-lg border border-indigo-800 text-right">
-                <p class="text-[10px] text-gray-400">STATUS</p>
+                <p class="text-[10px] text-gray-400">PAGAMENTO</p>
                 <p id="meuStatusPagamento" class="font-bold text-gray-400 text-xs">Pendente 🕒</p>
             </div>
         </div>
@@ -197,6 +209,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
         import { getFirestore, doc, setDoc, getDoc, onSnapshot, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
+        // CHAVES FIREBASE (Substitua se necessário, mas as suas já estão aqui)
         const firebaseConfig = {
             apiKey: "AIzaSyBenlc9jAuGq1zsbXuraG40Vzu0bu3PT0g",
             authDomain: "bolao-secreto.firebaseapp.com",
@@ -210,7 +223,7 @@
         try { 
             app = initializeApp(firebaseConfig); 
             db = getFirestore(app); 
-            console.log("Firebase OK (No Storage)"); 
+            console.log("Firebase OK (Firestore)"); 
         } catch (e) { alert("Erro config Firebase"); }
 
         let dadosSala = null;
@@ -220,6 +233,7 @@
         let unsubscribe = null; 
         let tempAvatar = { tipo: 'emoji', valor: '👤', cor: 'bg-indigo-600' };
         let origemPersonalizacao = '';
+        let timerInterval = null; // Para o cronômetro
 
         window.addEventListener('load', () => {
             const sessao = localStorage.getItem('bolao_sessao');
@@ -231,34 +245,24 @@
             }
         });
 
-        // --- COMPRESSOR DE IMAGEM (BASE64) ---
-        // Transforma arquivo em texto para salvar no Firestore (Grátis)
+        // --- COMPRESSOR DE IMAGEM ---
         window.processarImagem = (input) => {
             const file = input.files[0];
             if (!file) return;
-
             document.getElementById('loading-upload').classList.remove('hidden');
-
             const reader = new FileReader();
             reader.onload = function(e) {
                 const img = new Image();
                 img.src = e.target.result;
-                
                 img.onload = function() {
                     const canvas = document.createElement('canvas');
                     const ctx = canvas.getContext('2d');
-                    
-                    // Redimensiona para max 300px (para caber no Firestore)
                     const maxWidth = 300;
                     const scaleSize = maxWidth / img.width;
                     canvas.width = maxWidth;
                     canvas.height = img.height * scaleSize;
-
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    
-                    // Converte para String Base64 (Qualidade 0.6)
                     const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
-                    
                     tempAvatar.tipo = 'imagem';
                     tempAvatar.valor = dataUrl;
                     atualizarPreviewUI();
@@ -268,7 +272,7 @@
             reader.readAsDataURL(file);
         };
 
-        // --- RESTO DAS FUNÇÕES ---
+        // --- ENTRAR ---
         document.getElementById('btnEntrarFinal').addEventListener('click', async () => {
             const codigo = document.getElementById('eCodigo').value.trim().toUpperCase();
             const nome = document.getElementById('eNome').value.trim();
@@ -300,15 +304,20 @@
             } catch(e) { mostrarLoading(false); alert("Erro: " + e.message); }
         });
 
+        // --- CRIAR (AGORA COM DATA LIMITE) ---
         document.getElementById('btnCriarFinal').addEventListener('click', async () => {
             const nome = document.getElementById('cNomeEvento').value;
             const admin = document.getElementById('cNomeAdmin').value;
             const qtd = parseInt(document.getElementById('cQtd').value);
             const valor = parseFloat(document.getElementById('cValor').value);
             const pix = document.getElementById('cPix').value;
+            const dataLimite = document.getElementById('cDataLimite').value; // Novo campo
 
-            if(!nome || !admin || !pix) return alert("Preencha tudo!");
+            if(!nome || !admin || !pix || !dataLimite) return alert("Preencha todos os campos, incluindo a data!");
             mostrarLoading(true);
+
+            // Converter data para Timestamp (milissegundos)
+            const prazoTimestamp = new Date(dataLimite).getTime();
 
             const codigo = Math.random().toString(36).substring(2, 8).toUpperCase();
             let gabarito = {};
@@ -319,6 +328,7 @@
             try {
                 await setDoc(doc(db, "salas", codigo), {
                     admin, nomeEvento: nome, qtdMax: qtd, valor, pix,
+                    prazo: prazoTimestamp, // Salva o prazo
                     status: "PALPITES", gabarito,
                     participantes: [adminUser]
                 });
@@ -326,6 +336,7 @@
             } catch (error) { mostrarLoading(false); alert("Erro: " + error.message); }
         });
 
+        // --- AVATAR HELPERS ---
         const emojisList = ["🎅", "🤶", "🦌", "⛄", "🎁", "🎄", "👽", "🦄", "🐶", "🐱", "🦁", "🐼", "😎", "🤠", "🤖", "👻", "💩", "💀", "🤡", "👹"];
         const coresList = ["bg-red-500", "bg-green-500", "bg-blue-500", "bg-purple-600", "bg-yellow-500", "bg-pink-500", "bg-gray-600"];
 
@@ -337,10 +348,9 @@
             coresList.forEach(c => gridCores.innerHTML += `<div onclick="setTempCor('${c}')" class="w-8 h-8 rounded-full ${c} cursor-pointer hover:scale-110 border-2 border-white/20"></div>`);
             document.getElementById('modal-personalizar').classList.remove('hidden');
         }
-
         window.setTempEmoji = (e) => { tempAvatar.tipo = 'emoji'; tempAvatar.valor = e; atualizarPreviewUI(); }
         window.setTempCor = (c) => { tempAvatar.cor = c; atualizarPreviewUI(); }
-        
+        window.atualizarPreviewUrl = (u) => { if(u.length > 5) { tempAvatar.tipo = 'imagem'; tempAvatar.valor = u; atualizarPreviewUI(); } }
         function atualizarPreviewUI() {
             const el = document.getElementById('temp-avatar-preview');
             el.className = `w-24 h-24 rounded-full border-4 border-white flex items-center justify-center text-4xl shadow-xl overflow-hidden relative ${tempAvatar.cor}`;
@@ -348,7 +358,6 @@
             const content = tempAvatar.tipo === 'imagem' ? `<img src="${tempAvatar.valor}" class="avatar-img" onerror="this.src=''">` : tempAvatar.valor;
             el.innerHTML = content + loader;
         }
-
         window.salvarPersonalizacao = async () => {
             document.getElementById('modal-personalizar').classList.add('hidden');
             if(origemPersonalizacao === 'c') renderMiniAvatar('preview-avatar-c');
@@ -374,6 +383,7 @@
             return `<div class="${cls} ${av.cor} rounded-full flex items-center justify-center shadow border border-white/20 overflow-hidden text-white relative">${content}</div>`;
         }
 
+        // --- GESTÃO FINANCEIRA ---
         window.alternarPagamento = async (idAlvo) => {
             if(meuId !== 0) return; 
             const novaLista = [...dadosSala.participantes];
@@ -383,6 +393,7 @@
             catch(e) { alert("Erro ao atualizar pagamento."); }
         }
 
+        // --- LÓGICA DO JOGO ---
         function entrarNaSala(codigo, id, nome) {
             codigoSala = codigo; meuId = id; meuNome = nome;
             localStorage.setItem('bolao_sessao', JSON.stringify({ codigo, id, nome }));
@@ -394,6 +405,41 @@
                 if(doc.exists()) { dadosSala = doc.data(); atualizarTelaJogo(); }
                 else { alert("Sala encerrada."); voltarAoMenu(); }
             });
+            // Inicia o cronômetro
+            if(timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(atualizarCronometro, 1000);
+        }
+
+        function atualizarCronometro() {
+            if(!dadosSala || dadosSala.status === 'REVELADO') return;
+            
+            const agora = Date.now();
+            const prazo = dadosSala.prazo || 0;
+            const diff = prazo - agora;
+
+            const statusTexto = document.getElementById('status-texto');
+            const statusIcon = document.getElementById('status-icon');
+            const statusBar = document.getElementById('status-bar');
+
+            // BLOQUEIO AUTOMÁTICO POR TEMPO
+            if (diff <= 0) {
+                // Se o tempo acabou, mostra bloqueado (mesmo se o status no BD for PALPITES)
+                statusTexto.innerText = "Tempo Esgotado! 🛑";
+                statusIcon.innerText = "🔒";
+                statusBar.className = "bg-red-500/20 text-red-400 text-center text-sm py-3 rounded-lg mb-4 font-bold border border-red-500/30 flex justify-center gap-2";
+                return;
+            }
+
+            // SE AINDA TEM TEMPO E O STATUS É PALPITES
+            if (dadosSala.status === 'PALPITES') {
+                const horas = Math.floor(diff / (1000 * 60 * 60));
+                const minutos = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const segundos = Math.floor((diff % (1000 * 60)) / 1000);
+                
+                statusTexto.innerText = `Encerra em: ${horas}h ${minutos}m ${segundos}s`;
+                statusIcon.innerText = "⏳";
+                statusBar.className = "bg-green-500/20 text-green-400 text-center text-sm py-3 rounded-lg mb-4 font-bold border border-green-500/30 flex justify-center gap-2";
+            }
         }
 
         function atualizarTelaJogo() {
@@ -416,7 +462,7 @@
                 document.getElementById('painel-admin').classList.remove('hidden');
                 document.getElementById('btnCompartilhar').classList.remove('hidden');
                 document.getElementById('btnPix').classList.remove('col-span-2');
-                document.getElementById('btnAdminBloquear').onclick = () => mudarStatus('BLOQUEADO');
+                // O botão de bloquear manual foi removido, agora é automático ou revelar direto
                 document.getElementById('btnAdminRevelar').onclick = () => mudarStatus('REVELADO');
             } else {
                 document.getElementById('painel-admin').classList.add('hidden');
@@ -424,17 +470,13 @@
                 document.getElementById('btnPix').classList.add('col-span-2');
             }
 
-            const statusDiv = document.getElementById('status-bar');
-            if(dadosSala.status === 'PALPITES') {
-                statusDiv.innerText = "🟢 Palpites Liberados";
-                statusDiv.className = "bg-green-500/20 text-green-400 text-center text-sm py-2 rounded-lg mb-4 font-bold border border-green-500/30";
-            } else if (dadosSala.status === 'BLOQUEADO') {
-                statusDiv.innerText = "🔒 Bloqueado";
-                statusDiv.className = "bg-red-500/20 text-red-400 text-center text-sm py-2 rounded-lg mb-4 font-bold border border-red-500/30";
-            } else if (dadosSala.status === 'REVELADO') {
+            // Se o status já for REVELADO no banco, mostra direto
+            if (dadosSala.status === 'REVELADO') {
                 calcularEExibirRanking();
                 return;
             }
+            
+            // Renderiza a lista (o bloqueio de clique é checado dentro do renderLista usando o prazo)
             renderLista();
         }
 
@@ -446,19 +488,30 @@
             let feitos = 0;
             for (const [k, v] of Object.entries(palpites)) { if (dadosSala.participantes.some(p => p.id == k)) feitos++; }
             
+            // VERIFICA SE ESTÁ BLOQUEADO (TEMPO OU STATUS)
+            const tempoEsgotado = Date.now() > (dadosSala.prazo || 0);
+            const bloqueado = tempoEsgotado || dadosSala.status !== 'PALPITES';
+
             dadosSala.participantes.forEach(p => {
                 const pid = palpites[p.id]; 
                 const alvo = pid !== undefined ? dadosSala.participantes.find(x => x.id === pid) : null;
                 const avHtml = getAvatarHTML(p.avatar, "small");
                 let badgePago = p.pago ? `<div class="badge-pago">✔</div>` : '';
+                
+                // Botão Admin Pagamento (Checklist)
                 let btnAdminPag = '';
-                if(meuId === 0) btnAdminPag = `<button onclick="window.alternarPagamento(${p.id})" class="ml-2 text-[10px] px-2 py-1 rounded border ${p.pago ? 'border-green-500 text-green-400 bg-green-900/30' : 'border-gray-500 text-gray-400 bg-gray-800'} hover:bg-white/10">$</button>`;
+                if(meuId === 0) {
+                    btnAdminPag = `<button onclick="window.alternarPagamento(${p.id})" class="ml-2 text-[10px] px-2 py-1 rounded border ${p.pago ? 'border-green-500 text-green-400 bg-green-900/30' : 'border-gray-500 text-gray-400 bg-gray-800'} hover:bg-white/10 transition-colors">${p.pago ? 'Pago' : 'Validar'}</button>`;
+                }
 
                 let htmlPalpite = `<span class="text-2xl text-gray-600">?</span>`;
                 if(alvo) htmlPalpite = `<div class="flex items-center gap-2">${getAvatarHTML(alvo.avatar, "small")} <span class="font-bold text-green-400 truncate text-sm">${alvo.nome}</span></div>`;
 
                 let cls = 'cursor-default opacity-60'; let attr = '';
-                if(dadosSala.status === 'PALPITES' && p.id !== meuId) { cls = 'cursor-pointer hover:bg-white/10'; attr = `data-id="${p.id}"`; }
+                // SÓ PERMITE CLIQUE SE NÃO ESTIVER BLOQUEADO
+                if(!bloqueado && p.id !== meuId) { 
+                    cls = 'cursor-pointer hover:bg-white/10'; attr = `data-id="${p.id}"`; 
+                }
 
                 container.innerHTML += `
                     <div class="bg-white/5 border border-white/10 rounded-2xl p-3 flex items-center justify-between transition-all">
