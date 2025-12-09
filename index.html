@@ -84,7 +84,11 @@
                 <input type="number" id="cQtd" value="5" class="input-dark text-center" placeholder="Pessoas">
                 <input type="number" id="cValor" value="10" class="input-dark text-center" placeholder="Valor R$">
             </div>
-            <input type="text" id="cPix" placeholder="Chave Pix (Email/CPF)" class="input-dark">
+            
+            <div>
+                <label class="text-xs text-gray-400 ml-1 uppercase font-bold">Sua Chave PIX (Para receber se ganhar)</label>
+                <input type="text" id="cUserPix" placeholder="CPF / Email / Celular" class="input-dark">
+            </div>
             
             <button id="btnCriarFinal" class="w-full bg-green-500 hover:bg-green-400 text-white font-bold py-4 rounded-xl mt-4 shadow-lg active:scale-95">GERAR SALA 🎲</button>
             <button onclick="nav('tela-home')" class="w-full text-gray-400 text-sm py-2 hover:text-white">Voltar</button>
@@ -101,6 +105,11 @@
             <div onclick="abrirPersonalizacao('e')" class="flex items-center gap-3 bg-black/20 p-3 rounded-xl cursor-pointer hover:bg-black/30 border border-white/10">
                 <div id="preview-avatar-e" class="w-10 h-10 bg-indigo-500 rounded-full flex items-center justify-center text-xl overflow-hidden">👤</div>
                 <span class="text-sm text-gray-300">Escolher Avatar (Novos)</span>
+            </div>
+
+            <div>
+                <label class="text-xs text-gray-400 ml-1 uppercase font-bold">Sua Chave PIX (Para receber se ganhar)</label>
+                <input type="text" id="eUserPix" placeholder="CPF / Email / Celular" class="input-dark">
             </div>
 
             <button id="btnEntrarFinal" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-4 rounded-xl mt-4 shadow-lg active:scale-95">ENTRAR / LOGAR 🚀</button>
@@ -129,9 +138,8 @@
                 </div>
             </div>
             
-            <div class="grid grid-cols-2 gap-2 mt-4 relative z-10">
-                <button id="btnCompartilhar" class="hidden bg-indigo-600 hover:bg-indigo-500 py-2 rounded-lg text-xs text-white font-bold flex items-center justify-center gap-2"><i class="fa-brands fa-whatsapp text-lg"></i> Convidar</button>
-                <button id="btnPix" class="col-span-2 bg-gray-700 hover:bg-gray-600 py-2 rounded-lg text-xs text-gray-200 flex items-center justify-center gap-2"><i class="fa-brands fa-pix"></i> Copiar Chave Pix</button>
+            <div class="mt-4 relative z-10">
+                <button id="btnCompartilhar" class="hidden w-full bg-indigo-600 hover:bg-indigo-500 py-2 rounded-lg text-xs text-white font-bold flex items-center justify-center gap-2"><i class="fa-brands fa-whatsapp text-lg"></i> Convidar Amigos</button>
             </div>
         </div>
 
@@ -163,6 +171,15 @@
         <div class="text-center mb-6 mt-4">
             <h2 class="text-3xl font-display text-yellow-400">Resultado</h2>
         </div>
+        
+        <div id="area-vencedor-pix" class="bg-green-500/10 border border-green-500/50 p-4 rounded-xl mb-6 text-center hidden">
+            <p class="text-xs text-green-300 uppercase mb-1">👑 Prêmio para o Campeão</p>
+            <p class="text-white text-sm mb-2">Chave Pix de <span id="nome-vencedor" class="font-bold">...</span></p>
+            <div onclick="copiarPixVencedor()" class="bg-black/40 p-2 rounded text-yellow-400 font-mono text-lg cursor-pointer flex items-center justify-center gap-2">
+                <span id="pix-vencedor-chave">...</span> <i class="fa-regular fa-copy"></i>
+            </div>
+        </div>
+
         <div id="podio-area" class="flex justify-center items-end gap-2 mb-8 h-40"></div>
         <div id="lista-ranking" class="space-y-3 pb-10"></div>
         <div class="grid grid-cols-2 gap-4">
@@ -195,10 +212,9 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-        // ADICIONADO: deleteDoc
         import { getFirestore, doc, setDoc, getDoc, onSnapshot, updateDoc, arrayUnion, deleteDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
-        // CHAVES FIREBASE (AS MESMAS):
+        // CHAVES FIREBASE:
         const firebaseConfig = {
             apiKey: "AIzaSyBenlc9jAuGq1zsbXuraG40Vzu0bu3PT0g",
             authDomain: "bolao-secreto.firebaseapp.com",
@@ -231,16 +247,14 @@
             }
         });
 
-        // --- EXCLUIR SALA (NOVO) ---
+        // --- EXCLUIR SALA ---
         window.excluirSala = async () => {
-            if(confirm("⚠️ TEM CERTEZA? \nIsso apagará a sala e todos os palpites permanentemente. Ninguém mais poderá acessar.")) {
+            if(confirm("⚠️ TEM CERTEZA? \nIsso apagará a sala permanentemente.")) {
                 try {
                     await deleteDoc(doc(db, "salas", codigoSala));
-                    alert("Sala excluída com sucesso.");
+                    alert("Sala excluída.");
                     window.sairDaConta();
-                } catch(e) {
-                    alert("Erro ao excluir: " + e.message);
-                }
+                } catch(e) { alert("Erro ao excluir."); }
             }
         }
 
@@ -272,7 +286,7 @@
             }
         }
 
-        // --- COMPRESSOR DE IMAGEM ---
+        // --- COMPRESSOR ---
         window.processarImagem = (input) => {
             const file = input.files[0];
             if (!file) return;
@@ -299,11 +313,13 @@
             reader.readAsDataURL(file);
         };
 
-        // --- ENTRAR ---
+        // --- ENTRAR (SALVA PIX) ---
         document.getElementById('btnEntrarFinal').addEventListener('click', async () => {
             const codigo = document.getElementById('eCodigo').value.trim().toUpperCase();
             const nome = document.getElementById('eNome').value.trim();
-            if(!codigo || !nome) return alert("Preencha tudo!");
+            const pix = document.getElementById('eUserPix').value.trim();
+            
+            if(!codigo || !nome || !pix) return alert("Preencha todos os campos e sua chave PIX!");
             mostrarLoading(true, "Verificando...");
             const docRef = doc(db, "salas", codigo);
             try {
@@ -312,13 +328,13 @@
                     const dados = docSnap.data();
                     const userExistente = dados.participantes.find(p => p.nome.toUpperCase() === nome.toUpperCase());
                     if(userExistente) {
-                        if(confirm(`Olá ${userExistente.nome}! Entrar na sua conta?`)) {
+                        if(confirm(`Olá ${userExistente.nome}! Entrar na conta existente?`)) {
                             entrarNaSala(codigo, userExistente.id, userExistente.nome);
                         } else { mostrarLoading(false); alert("Nome em uso."); }
                     } else {
                         if (dados.participantes.length >= dados.qtdMax) { mostrarLoading(false); return alert("Sala cheia!"); }
                         const novoId = dados.participantes.length;
-                        const novoUser = { id: novoId, nome: nome, palpites: {}, avatar: tempAvatar, pago: false };
+                        const novoUser = { id: novoId, nome: nome, palpites: {}, avatar: tempAvatar, pago: false, pix: pix };
                         await updateDoc(docRef, { participantes: arrayUnion(novoUser) });
                         entrarNaSala(codigo, novoId, nome);
                     }
@@ -326,16 +342,16 @@
             } catch(e) { mostrarLoading(false); alert("Erro: " + e.message); }
         });
 
-        // --- CRIAR ---
+        // --- CRIAR (SALVA PIX ADMIN) ---
         document.getElementById('btnCriarFinal').addEventListener('click', async () => {
             const nome = document.getElementById('cNomeEvento').value;
             const admin = document.getElementById('cNomeAdmin').value;
             const qtd = parseInt(document.getElementById('cQtd').value);
             const valor = parseFloat(document.getElementById('cValor').value);
-            const pix = document.getElementById('cPix').value;
             const dataLimite = document.getElementById('cDataLimite').value;
+            const pix = document.getElementById('cUserPix').value;
 
-            if(!nome || !admin || !pix || !dataLimite) return alert("Preencha tudo!");
+            if(!nome || !admin || !dataLimite || !pix) return alert("Preencha tudo!");
             mostrarLoading(true);
 
             const prazoTimestamp = new Date(dataLimite).getTime();
@@ -343,11 +359,11 @@
             let gabarito = {};
             for(let i=0; i<qtd; i++) gabarito[i] = (i === qtd-1) ? 0 : i+1;
 
-            const adminUser = { id: 0, nome: admin, palpites: {}, avatar: tempAvatar, pago: false };
+            const adminUser = { id: 0, nome: admin, palpites: {}, avatar: tempAvatar, pago: false, pix: pix };
 
             try {
                 await setDoc(doc(db, "salas", codigo), {
-                    admin, nomeEvento: nome, qtdMax: qtd, valor, pix,
+                    admin, nomeEvento: nome, qtdMax: qtd, valor,
                     prazo: prazoTimestamp,
                     status: "PALPITES", gabarito,
                     participantes: [adminUser]
@@ -356,7 +372,6 @@
             } catch (error) { mostrarLoading(false); alert("Erro: " + error.message); }
         });
 
-        // --- AVATAR ---
         const emojisList = ["🎅", "🤶", "🦌", "⛄", "🎁", "🎄", "👽", "🦄", "🐶", "🐱", "🦁", "🐼", "😎", "🤠", "🤖", "👻", "💩", "💀", "🤡", "👹"];
         const coresList = ["bg-red-500", "bg-green-500", "bg-blue-500", "bg-purple-600", "bg-yellow-500", "bg-pink-500", "bg-gray-600"];
         window.abrirPersonalizacao = (origem) => {
@@ -430,8 +445,7 @@
             const pagantes = dadosSala.participantes.filter(p => p.pago).length;
             document.getElementById('dNomeEvento').innerText = dadosSala.nomeEvento;
             document.getElementById('dPremio').innerText = `R$ ${(dadosSala.valor * pagantes).toFixed(2)}`;
-            document.getElementById('btnPix').onclick = () => { navigator.clipboard.writeText(dadosSala.pix); alert("Chave Pix copiada!"); };
-
+            
             const eu = dadosSala.participantes.find(p => p.id === meuId);
             if(eu) {
                 document.getElementById('meuNomeDisplay').innerText = eu.nome;
@@ -445,12 +459,10 @@
             if(meuId === 0) {
                 document.getElementById('painel-admin').classList.remove('hidden');
                 document.getElementById('btnCompartilhar').classList.remove('hidden');
-                document.getElementById('btnPix').classList.remove('col-span-2');
                 document.getElementById('btnAdminRevelar').onclick = () => mudarStatus('REVELADO');
             } else {
                 document.getElementById('painel-admin').classList.add('hidden');
                 document.getElementById('btnCompartilhar').classList.add('hidden');
-                document.getElementById('btnPix').classList.add('col-span-2');
             }
 
             if (dadosSala.status === 'REVELADO') {
@@ -479,19 +491,12 @@
                 let btnAdminPag = '';
                 if(meuId === 0) btnAdminPag = `<button onclick="window.alternarPagamento(${p.id})" class="ml-2 text-[10px] px-2 py-1 rounded border ${p.pago ? 'border-green-500 text-green-400 bg-green-900/30' : 'border-gray-500 text-gray-400 bg-gray-800'} hover:bg-white/10 transition-colors">${p.pago ? 'Pago' : 'Validar'}</button>`;
 
-                // Visualização de Palpite + Edição
                 let htmlPalpite = `<span class="text-2xl text-gray-600">?</span>`;
                 if(alvo) {
-                    htmlPalpite = `
-                        <div class="flex items-center gap-2">
-                            ${getAvatarHTML(alvo.avatar, "small")} 
-                            <span class="font-bold text-green-400 truncate text-sm">${alvo.nome}</span>
-                            ${!bloqueado && p.id === meuId ? '<i class="fa-solid fa-pencil text-gray-500 text-[10px] ml-1"></i>' : ''}
-                        </div>`;
+                    htmlPalpite = `<div class="flex items-center gap-2">${getAvatarHTML(alvo.avatar, "small")} <span class="font-bold text-green-400 truncate text-sm">${alvo.nome}</span>${!bloqueado && p.id === meuId ? '<i class="fa-solid fa-pencil text-gray-500 text-[10px] ml-1"></i>' : ''}</div>`;
                 }
 
                 let cls = 'cursor-default opacity-60'; let attr = '';
-                // PERMITE CLICAR PARA EDITAR SE NÃO BLOQUEADO
                 if(!bloqueado && p.id !== meuId) { cls = 'cursor-pointer hover:bg-white/10'; attr = `data-id="${p.id}"`; }
 
                 container.innerHTML += `
@@ -537,12 +542,27 @@
         window.nav = (t) => { document.querySelectorAll('.page-enter').forEach(el => el.classList.add('hidden')); document.getElementById(t).classList.remove('hidden'); };
         function mostrarLoading(show, txt="...") { document.getElementById('loading').classList.toggle('hidden', !show); document.getElementById('loading-text').innerText = txt; }
         document.getElementById('btnCompartilhar').addEventListener('click', async () => { const txt = `🎁 Bolão Amigo Secreto!\nCódigo: *${codigoSala}*\nLink: ${window.location.href}`; if (navigator.share) try { await navigator.share({ title: 'Bolão', text: txt, url: window.location.href }); } catch (err) {} else { navigator.clipboard.writeText(txt); alert("Copiado!"); } });
-        window.copiarCodigo = () => { navigator.clipboard.writeText(codigoSala); alert("Código copiado!"); }
+        
+        // MOSTRAR PIX DO VENCEDOR
+        window.copiarPixVencedor = () => {
+            const pix = document.getElementById('pix-vencedor-chave').innerText;
+            navigator.clipboard.writeText(pix);
+            alert("Chave do Vencedor Copiada!");
+        }
 
         function calcularEExibirRanking() {
             window.nav('tela-ranking'); const c = document.getElementById('lista-ranking'); const podio = document.getElementById('podio-area'); c.innerHTML = '';
-            let rk = []; dadosSala.participantes.forEach(p => { let pts = 0; if(p.palpites) { for (const [k, v] of Object.entries(p.palpites)) { if(parseInt(v) === dadosSala.gabarito[k]) pts++; } } rk.push({ nome: p.nome, pontos: pts, palpites: p.palpites, avatar: p.avatar }); });
+            let rk = []; dadosSala.participantes.forEach(p => { let pts = 0; if(p.palpites) { for (const [k, v] of Object.entries(p.palpites)) { if(parseInt(v) === dadosSala.gabarito[k]) pts++; } } rk.push({ nome: p.nome, pontos: pts, palpites: p.palpites, avatar: p.avatar, pix: p.pix }); });
             rk.sort((a,b) => b.pontos - a.pontos);
+
+            // EXIBE PIX DO VENCEDOR
+            const vencedor = rk[0];
+            if(vencedor && vencedor.pix) {
+                document.getElementById('area-vencedor-pix').classList.remove('hidden');
+                document.getElementById('nome-vencedor').innerText = vencedor.nome;
+                document.getElementById('pix-vencedor-chave').innerText = vencedor.pix;
+            }
+
             podio.innerHTML = `<div class="flex flex-col items-center"><div class="text-3xl mb-1">🥈</div><div class="bg-gray-400/20 p-2 rounded-t-lg h-24 flex flex-col items-center justify-end font-bold w-20 text-sm text-gray-300 gap-1">${getAvatarHTML(rk[1]?.avatar, "small")}<span>${rk[1]?.nome.split(' ')[0] || '-'}</span></div></div><div class="flex flex-col items-center -mt-4"><div class="text-4xl mb-1">🥇</div><div class="bg-yellow-400/20 border-2 border-yellow-400 p-2 rounded-t-lg h-32 flex flex-col items-center justify-end font-bold text-yellow-400 w-24 shadow-[0_0_15px_rgba(250,204,21,0.3)] gap-1">${getAvatarHTML(rk[0]?.avatar, "small")}<span>${rk[0]?.nome.split(' ')[0] || '-'}</span></div></div><div class="flex flex-col items-center"><div class="text-3xl mb-1">🥉</div><div class="bg-orange-700/20 p-2 rounded-t-lg h-16 flex flex-col items-center justify-end font-bold w-20 text-sm text-orange-300 gap-1">${getAvatarHTML(rk[2]?.avatar, "small")}<span>${rk[2]?.nome.split(' ')[0] || '-'}</span></div></div>`;
             rk.forEach((r, idx) => {
                 let det = '<div class="mt-4 grid grid-cols-1 gap-2 bg-black/20 p-3 rounded-xl">';
