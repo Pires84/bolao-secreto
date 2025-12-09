@@ -36,7 +36,7 @@
     </div>
 
     <div id="tela-home" class="min-h-screen flex flex-col items-center justify-center p-6 page-enter">
-        <div class="text-center mb-10">
+        <div class="text-center mb-8">
             <div class="inline-block bg-yellow-400 p-5 rounded-full mb-4 shadow-[0_0_30px_rgba(250,204,21,0.4)]">
                 <i class="fa-solid fa-gift text-4xl text-purple-900"></i>
             </div>
@@ -44,22 +44,29 @@
             <p class="text-gray-300">Multiplayer Online</p>
         </div>
         
-        <div id="area-reconectar" class="w-full max-w-sm mb-4 hidden bg-indigo-900/50 p-6 rounded-2xl border border-indigo-500 text-center">
-            <p class="text-gray-300 mb-2">Olá de volta, <span id="rec-nome" class="font-bold text-yellow-400">Usuario</span>!</p>
-            <p class="text-xs text-gray-400 mb-4">Você já está participando de uma sala.</p>
+        <div class="w-full max-w-sm space-y-4">
             
-            <button onclick="reconectarSessao()" class="w-full bg-green-500 hover:bg-green-400 text-white font-bold text-lg py-3 rounded-xl shadow-lg border border-green-400 flex items-center justify-center gap-2 mb-3">
-                <i class="fa-solid fa-play"></i> VOLTAR PARA A SALA
+            <button id="btn-retomar" onclick="reconectarSessao()" class="hidden w-full bg-green-500 hover:bg-green-400 text-white font-bold text-xl py-4 rounded-2xl shadow-lg border-2 border-green-400 flex flex-col items-center justify-center gap-1 transition-transform active:scale-95 relative overflow-hidden">
+                <div class="flex items-center gap-3">
+                    <i class="fa-solid fa-rotate-right"></i> RETOMAR SALA
+                </div>
+                <span id="label-retomar" class="text-xs font-normal opacity-90 text-green-100">Como: Usuario</span>
+                <div class="absolute -right-6 -top-6 bg-white/20 w-16 h-16 rounded-full blur-xl"></div>
             </button>
-            
-            <button onclick="sairDaSala()" class="text-red-400 text-xs hover:text-red-300 underline">
-                Não sou eu / Sair da conta
-            </button>
-        </div>
 
-        <div id="area-botoes-iniciais" class="w-full max-w-sm space-y-4">
-            <button onclick="nav('tela-criar')" class="w-full bg-yellow-400 hover:bg-yellow-300 text-purple-900 font-bold text-xl py-4 rounded-2xl shadow-lg flex items-center justify-center gap-3"><i class="fa-solid fa-plus-circle"></i> CRIAR SALA</button>
-            <button onclick="nav('tela-entrar')" class="w-full bg-indigo-800 hover:bg-indigo-700 text-white font-bold text-xl py-4 rounded-2xl shadow-lg border border-indigo-600 flex items-center justify-center gap-3"><i class="fa-solid fa-ticket"></i> ENTRAR</button>
+            <button onclick="nav('tela-criar')" class="w-full bg-yellow-400 hover:bg-yellow-300 text-purple-900 font-bold text-xl py-4 rounded-2xl shadow-lg flex items-center justify-center gap-3 transition-transform active:scale-95">
+                <i class="fa-solid fa-plus-circle"></i> CRIAR SALA
+            </button>
+            
+            <button onclick="nav('tela-entrar')" class="w-full bg-indigo-800 hover:bg-indigo-700 text-white font-bold text-xl py-4 rounded-2xl shadow-lg border border-indigo-600 flex items-center justify-center gap-3 transition-transform active:scale-95">
+                <i class="fa-solid fa-ticket"></i> ENTRAR COM CÓDIGO
+            </button>
+
+            <div id="area-logout" class="text-center hidden pt-4">
+                <button onclick="sairDaConta()" class="text-red-400 text-xs hover:text-red-300 underline opacity-60 hover:opacity-100 transition-opacity">
+                    Limpar dados salvos (Sair)
+                </button>
+            </div>
         </div>
     </div>
 
@@ -90,8 +97,8 @@
 
     <div id="tela-jogo" class="hidden max-w-md mx-auto p-4 page-enter">
         <div class="flex justify-between items-center mb-4 mt-2">
-            <button onclick="sairDaSala()" class="text-xs text-red-400 border border-red-900 px-3 py-1 rounded-full hover:bg-red-900/50">
-                <i class="fa-solid fa-right-from-bracket"></i> Sair
+            <button onclick="voltarAoMenu()" class="text-xs text-gray-400 border border-gray-600 px-3 py-1 rounded-full hover:bg-gray-800">
+                <i class="fa-solid fa-arrow-left"></i> Menu
             </button>
             <div class="text-xs text-gray-500">Bolão Online</div>
         </div>
@@ -111,7 +118,6 @@
                     <div class="text-[10px] text-gray-400 uppercase">Prêmio Total</div>
                 </div>
             </div>
-            
             <div class="grid grid-cols-2 gap-2 mt-4 relative z-10">
                 <button id="btnCompartilhar" class="hidden bg-indigo-600 hover:bg-indigo-500 py-2 rounded-lg text-xs text-white font-bold flex items-center justify-center gap-2 transition-colors">
                     <i class="fa-brands fa-whatsapp text-lg"></i> Convidar
@@ -142,7 +148,7 @@
         <div id="podio-area" class="flex justify-center items-end gap-2 mb-8 h-40"></div>
         <div id="lista-ranking" class="space-y-3 pb-10"></div>
         <div class="grid grid-cols-2 gap-4">
-             <button onclick="sairDaSala()" class="w-full py-4 border border-red-500/30 text-red-400 rounded-xl hover:bg-red-900/20">Sair</button>
+             <button onclick="voltarAoMenu()" class="w-full py-4 border border-white/20 text-gray-400 rounded-xl hover:bg-white/5">Menu</button>
              <button onclick="location.reload()" class="w-full py-4 border border-white/20 text-gray-400 rounded-xl hover:bg-white/5">Atualizar</button>
         </div>
     </div>
@@ -158,6 +164,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
         import { getFirestore, doc, setDoc, getDoc, onSnapshot, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
+        // SUAS CHAVES DO FIREBASE:
         const firebaseConfig = {
             apiKey: "AIzaSyBenlc9jAuGq1zsbXuraG40Vzu0bu3PT0g",
             authDomain: "bolao-secreto.firebaseapp.com",
@@ -180,18 +187,16 @@
         let codigoSala = null;
         let unsubscribe = null; 
 
-        // --- 1. VERIFICAÇÃO DE SESSÃO (CORREÇÃO DE UX) ---
-        // Se houver login, ESCONDE os botões de entrar e MOSTRA o de reconectar
+        // --- 1. LÓGICA DE LOGIN (VERSÃO 9.0) ---
         window.addEventListener('load', () => {
             const sessao = localStorage.getItem('bolao_sessao');
+            
+            // Sempre mostra Criar e Entrar. Se houver sessão, mostra Retomar também.
             if(sessao) {
                 const dados = JSON.parse(sessao);
-                document.getElementById('area-botoes-iniciais').classList.add('hidden'); // Esconde Criar/Entrar
-                document.getElementById('area-reconectar').classList.remove('hidden'); // Mostra "Voltar"
-                document.getElementById('rec-nome').innerText = dados.nome;
-            } else {
-                document.getElementById('area-botoes-iniciais').classList.remove('hidden');
-                document.getElementById('area-reconectar').classList.add('hidden');
+                document.getElementById('btn-retomar').classList.remove('hidden'); // Exibe botão 1
+                document.getElementById('label-retomar').innerText = `Como: ${dados.nome}`;
+                document.getElementById('area-logout').classList.remove('hidden'); // Exibe link de limpar
             }
         });
 
@@ -204,8 +209,8 @@
                     if(docSnap.exists()) {
                         entrarNaSala(sessao.codigo, sessao.id, sessao.nome);
                     } else {
-                        alert("Essa sala não existe mais.");
-                        sairDaSala();
+                        alert("Sala não encontrada. Talvez tenha expirado.");
+                        sairDaConta(); // Limpa se não existir mais
                     }
                 } catch(e) {
                     mostrarLoading(false);
@@ -214,11 +219,19 @@
             }
         };
 
-        window.sairDaSala = () => {
-            if(unsubscribe) unsubscribe(); 
-            localStorage.removeItem('bolao_sessao');
-            location.reload(); 
+        window.sairDaConta = () => {
+            if(confirm("Isso apagará seus dados salvos neste dispositivo. Continuar?")) {
+                localStorage.removeItem('bolao_sessao');
+                location.reload();
+            }
         };
+
+        window.voltarAoMenu = () => {
+            if(unsubscribe) unsubscribe();
+            // Não limpamos o localStorage aqui, apenas voltamos para a Home
+            // Assim o botão "Retomar" continua lá.
+            window.nav('tela-home');
+        }
 
         // --- NAVEGAÇÃO ---
         window.nav = (tela) => {
@@ -232,16 +245,15 @@
             if(show) el.classList.remove('hidden'); else el.classList.add('hidden');
         }
 
-        // --- BOTÃO COMPARTILHAR (SÓ ADMIN) ---
+        // --- BOTÕES E AÇÕES ---
         document.getElementById('btnCompartilhar').addEventListener('click', async () => {
             const url = window.location.href; 
-            const textoShare = `🎁 Bolão Amigo Secreto!\nCódigo da sala: *${codigoSala}*\nAcede aqui: ${url}`;
-            
+            const textoShare = `🎁 Bolão Amigo Secreto!\nCódigo: *${codigoSala}*\nLink: ${url}`;
             if (navigator.share) {
-                try { await navigator.share({ title: 'Bolão Secreto', text: textoShare, url: url }); } catch (err) { }
+                try { await navigator.share({ title: 'Bolão', text: textoShare, url: url }); } catch (err) {}
             } else {
                 navigator.clipboard.writeText(textoShare);
-                alert("Convite copiado! Cole no WhatsApp.");
+                alert("Texto copiado! Cole no WhatsApp.");
             }
         });
 
@@ -250,7 +262,7 @@
             alert("Código copiado!");
         }
 
-        // --- CRIAR SALA ---
+        // --- CRIAR ---
         document.getElementById('btnCriarFinal').addEventListener('click', async () => {
             const nomeEvento = document.getElementById('cNomeEvento').value;
             const nomeAdmin = document.getElementById('cNomeAdmin').value;
@@ -258,7 +270,7 @@
             const valor = parseFloat(document.getElementById('cValor').value);
             const pix = document.getElementById('cPix').value;
 
-            if(!nomeEvento || !nomeAdmin || !pix) return alert("Preencha todos os campos!");
+            if(!nomeEvento || !nomeAdmin || !pix) return alert("Preencha tudo!");
             mostrarLoading(true, "Criando sala...");
 
             const codigo = Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -273,12 +285,12 @@
                 });
                 entrarNaSala(codigo, 0, nomeAdmin);
             } catch (error) {
-                alert("Erro: " + error.message);
                 mostrarLoading(false);
+                alert("Erro: " + error.message);
             }
         });
 
-        // --- ENTRAR SALA ---
+        // --- ENTRAR ---
         document.getElementById('btnEntrarFinal').addEventListener('click', async () => {
             const codigo = document.getElementById('eCodigo').value.trim().toUpperCase();
             const nome = document.getElementById('eNome').value.trim();
@@ -291,9 +303,17 @@
                 if (docSnap.exists()) {
                     const dados = docSnap.data();
                     
-                    // Verifica duplicidade APENAS se o usuário não tiver sessão válida
-                    // (Se tiver sessão, ele nem vê essa tela, vê o botão de reconectar)
-                    
+                    const usuarioExistente = dados.participantes.find(p => p.nome.toUpperCase() === nome.toUpperCase());
+                    if(usuarioExistente) {
+                        if(confirm(`"${usuarioExistente.nome}" já existe. É você?`)) {
+                            entrarNaSala(codigo, usuarioExistente.id, usuarioExistente.nome);
+                            return;
+                        } else {
+                            mostrarLoading(false);
+                            return alert("Nome em uso. Escolha outro.");
+                        }
+                    }
+
                     if (dados.participantes.length >= dados.qtdMax) {
                         mostrarLoading(false);
                         return alert("Sala lotada!");
@@ -315,6 +335,7 @@
             meuId = id;
             meuNome = nome;
 
+            // Salva sessão (Sobrescreve se existir outra, pois o usuário escolheu entrar nesta)
             localStorage.setItem('bolao_sessao', JSON.stringify({ codigo, id, nome }));
 
             document.getElementById('dCodigo').innerText = codigo;
@@ -328,8 +349,8 @@
                     dadosSala = doc.data();
                     atualizarTelaJogo();
                 } else {
-                    alert("A sala foi encerrada.");
-                    sairDaSala();
+                    alert("Sala encerrada.");
+                    voltarAoMenu();
                 }
             });
         }
@@ -348,18 +369,16 @@
             const btnCompartilhar = document.getElementById('btnCompartilhar');
             const btnPix = document.getElementById('btnPix');
             
-            // LÓGICA DE ADMIN (MOSTRAR COMPARTILHAR)
-            if(meuId === 0) {
+            if(meuId === 0) { // Admin
                 painelAdmin.classList.remove('hidden');
-                btnCompartilhar.classList.remove('hidden'); // Mostra botão
-                btnPix.classList.remove('col-span-2'); // Ajusta layout
-                
+                btnCompartilhar.classList.remove('hidden'); 
+                btnPix.classList.remove('col-span-2');
                 document.getElementById('btnAdminBloquear').onclick = () => mudarStatus('BLOQUEADO');
                 document.getElementById('btnAdminRevelar').onclick = () => mudarStatus('REVELADO');
             } else {
                 painelAdmin.classList.add('hidden');
-                btnCompartilhar.classList.add('hidden'); // Esconde botão
-                btnPix.classList.add('col-span-2'); // Ocupa largura total
+                btnCompartilhar.classList.add('hidden');
+                btnPix.classList.add('col-span-2');
             }
 
             if(dadosSala.status === 'PALPITES') {
