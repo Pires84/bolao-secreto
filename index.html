@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bolão Amigo Secreto - App Completo</title>
+    <title>Bolão Amigo Secreto - Online</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
@@ -11,32 +11,24 @@
     <style>
         body { font-family: 'Nunito', sans-serif; background-color: #2D1B4E; color: #F5F5F5; }
         h1, h2, h3, .font-display { font-family: 'Fredoka One', cursive; }
-        
-        /* Animações e Utilitários */
         .page-enter { animation: slideIn 0.4s ease-out forwards; }
         @keyframes slideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        
-        details > summary { list-style: none; cursor: pointer; transition: all 0.2s; }
+        .input-dark { width: 100%; padding: 1rem; border-radius: 0.75rem; background-color: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; outline: none; }
+        details > summary { list-style: none; cursor: pointer; }
         details > summary::-webkit-details-marker { display: none; }
-        .rotate-icon { transition: transform 0.3s; }
-        details[open] .rotate-icon { transform: rotate(180deg); }
-
-        .input-dark {
-            width: 100%; padding: 1rem; border-radius: 0.75rem;
-            background-color: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
-            color: white; outline: none; transition: all 0.3s;
-        }
-        .input-dark:focus { border-color: #FACC15; background-color: rgba(255,255,255,0.15); }
     </style>
 </head>
 <body class="bg-[#2D1B4E] min-h-screen pb-10">
 
-    <div id="painel-admin" class="hidden fixed top-0 right-0 p-2 z-50 opacity-90">
+    <div id="loading" class="fixed inset-0 bg-[#2D1B4E] z-[60] flex items-center justify-center hidden">
+        <div class="animate-spin text-4xl text-yellow-400">⏳</div>
+    </div>
+
+    <div id="painel-admin" class="hidden fixed top-0 right-0 p-2 z-50">
         <div class="bg-gray-800 p-2 rounded-lg text-xs shadow-xl border border-gray-600 flex flex-col gap-1">
-            <p class="mb-1 text-gray-400 font-bold text-center">SIMULADOR</p>
-            <button onclick="mudarFase('PALPITES')" class="bg-blue-600 px-2 py-1 rounded text-white hover:bg-blue-500">Liberar Palpites</button>
-            <button onclick="mudarFase('BLOQUEADO')" class="bg-red-600 px-2 py-1 rounded text-white hover:bg-red-500">Bloquear (1h antes)</button>
-            <button onclick="calcularResultado()" class="bg-yellow-600 px-2 py-1 rounded text-white hover:bg-yellow-500">Revelar Resultado</button>
+            <p class="mb-1 text-gray-400 font-bold text-center">ADMIN</p>
+            <button id="btnAdminBloquear" class="bg-red-600 px-2 py-1 rounded text-white hover:bg-red-500">Bloquear Palpites</button>
+            <button id="btnAdminRevelar" class="bg-yellow-600 px-2 py-1 rounded text-white hover:bg-yellow-500">Revelar Resultado</button>
         </div>
     </div>
 
@@ -46,394 +38,442 @@
                 <i class="fa-solid fa-gift text-4xl text-purple-900"></i>
             </div>
             <h1 class="text-4xl text-yellow-400 mb-2 font-display">Bolão Secreto</h1>
-            <p class="text-gray-300">Crie sua sala, convide a turma e descubra quem tirou quem!</p>
+            <p class="text-gray-300">Multiplayer Online</p>
         </div>
-
         <div class="w-full max-w-sm space-y-4">
-            <button onclick="trocarTela('tela-home', 'tela-criar')" class="w-full bg-yellow-400 hover:bg-yellow-300 text-purple-900 font-bold text-xl py-4 rounded-2xl shadow-lg transition-transform active:scale-95 flex items-center justify-center gap-3">
-                <i class="fa-solid fa-plus-circle"></i> CRIAR EVENTO
-            </button>
-            <button onclick="trocarTela('tela-home', 'tela-entrar')" class="w-full bg-indigo-800 hover:bg-indigo-700 text-white font-bold text-xl py-4 rounded-2xl shadow-lg border border-indigo-600 transition-transform active:scale-95 flex items-center justify-center gap-3">
-                <i class="fa-solid fa-ticket"></i> TENHO CÓDIGO
-            </button>
+            <button onclick="nav('tela-criar')" class="w-full bg-yellow-400 hover:bg-yellow-300 text-purple-900 font-bold text-xl py-4 rounded-2xl shadow-lg flex items-center justify-center gap-3"><i class="fa-solid fa-plus-circle"></i> CRIAR SALA</button>
+            <button onclick="nav('tela-entrar')" class="w-full bg-indigo-800 hover:bg-indigo-700 text-white font-bold text-xl py-4 rounded-2xl shadow-lg border border-indigo-600 flex items-center justify-center gap-3"><i class="fa-solid fa-ticket"></i> ENTRAR</button>
         </div>
     </div>
 
     <div id="tela-criar" class="hidden min-h-screen flex flex-col items-center justify-center p-6 page-enter">
-        <h2 class="text-2xl text-yellow-400 font-display mb-6">Configurar Evento</h2>
+        <h2 class="text-2xl text-yellow-400 font-display mb-6">Criar Sala</h2>
         <div class="w-full max-w-sm bg-white/5 p-6 rounded-3xl border border-white/10 space-y-4">
-            <div>
-                <label class="text-xs text-gray-400 ml-1 uppercase font-bold">Nome do Evento</label>
-                <input type="text" id="confNomeEvento" placeholder="Ex: Natal da Família" class="input-dark">
-            </div>
+            <input type="text" id="cNomeEvento" placeholder="Nome do Evento" class="input-dark">
+            <input type="text" id="cNomeAdmin" placeholder="Seu Nome (Admin)" class="input-dark">
             <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="text-xs text-gray-400 ml-1 uppercase font-bold">Participantes</label>
-                    <input type="number" id="confQtd" value="10" class="input-dark text-center">
-                </div>
-                <div>
-                    <label class="text-xs text-gray-400 ml-1 uppercase font-bold">Valor (R$)</label>
-                    <input type="number" id="confValor" value="10" class="input-dark text-center">
-                </div>
+                <input type="number" id="cQtd" value="5" class="input-dark text-center" placeholder="Pessoas">
+                <input type="number" id="cValor" value="10" class="input-dark text-center" placeholder="Valor R$">
             </div>
-            <div>
-                <label class="text-xs text-gray-400 ml-1 uppercase font-bold">Chave Pix</label>
-                <input type="text" id="confPix" placeholder="Para pagamento do prêmio" class="input-dark">
-            </div>
-            <button onclick="gerarSala()" class="w-full bg-green-500 hover:bg-green-400 text-white font-bold py-4 rounded-xl mt-4 shadow-lg active:scale-95 transition-all">GERAR SALA 🎲</button>
-            <button onclick="voltarHome()" class="w-full text-gray-400 text-sm py-2 hover:text-white">Voltar</button>
+            <input type="text" id="cPix" placeholder="Chave Pix" class="input-dark">
+            <button id="btnCriarFinal" class="w-full bg-green-500 hover:bg-green-400 text-white font-bold py-4 rounded-xl mt-4 shadow-lg active:scale-95 transition-all">GERAR SALA 🎲</button>
+            <button onclick="nav('tela-home')" class="w-full text-gray-400 text-sm py-2 hover:text-white">Voltar</button>
         </div>
     </div>
 
     <div id="tela-entrar" class="hidden min-h-screen flex flex-col items-center justify-center p-6 page-enter">
-        <h2 class="text-2xl text-yellow-400 font-display mb-6">Entrar no Bolão</h2>
+        <h2 class="text-2xl text-yellow-400 font-display mb-6">Entrar</h2>
         <div class="w-full max-w-sm bg-white/5 p-6 rounded-3xl border border-white/10 space-y-4">
-            <div>
-                <label class="text-xs text-gray-400 ml-1 uppercase font-bold">Código da Sala</label>
-                <input type="text" id="inputCodigoSala" placeholder="Ex: NATAL" class="input-dark text-center uppercase text-2xl tracking-widest font-display">
-            </div>
-            <div>
-                <label class="text-xs text-gray-400 ml-1 uppercase font-bold">Seu Nome</label>
-                <input type="text" id="inputNomeParticipante" placeholder="Seu nome" class="input-dark">
-            </div>
-            <button onclick="acessarSala()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-4 rounded-xl mt-4 shadow-lg active:scale-95 transition-all">ENTRAR 🚀</button>
-            <button onclick="voltarHome()" class="w-full text-gray-400 text-sm py-2 hover:text-white">Voltar</button>
+            <input type="text" id="eCodigo" placeholder="Código da Sala" class="input-dark text-center uppercase text-2xl tracking-widest font-display">
+            <input type="text" id="eNome" placeholder="Seu Nome" class="input-dark">
+            <button id="btnEntrarFinal" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-4 rounded-xl mt-4 shadow-lg active:scale-95 transition-all">ENTRAR 🚀</button>
+            <button onclick="nav('tela-home')" class="w-full text-gray-400 text-sm py-2 hover:text-white">Voltar</button>
         </div>
     </div>
 
     <div id="tela-jogo" class="hidden max-w-md mx-auto p-4 page-enter">
         <div class="bg-indigo-900/50 p-4 rounded-2xl mb-4 border border-indigo-500/30">
-            <div class="flex justify-between items-start mb-2">
+            <div class="flex justify-between">
                 <div>
-                    <h3 id="displayNomeEvento" class="font-bold text-lg text-white">Evento...</h3>
-                    <p class="text-xs text-gray-400">Código: <span id="displayCodigo" class="text-yellow-400 font-bold bg-white/10 px-2 py-0.5 rounded ml-1 select-all cursor-pointer">...</span></p>
+                    <h3 id="dNomeEvento" class="font-bold text-lg text-white">...</h3>
+                    <p class="text-xs text-gray-400">Código: <span id="dCodigo" class="text-yellow-400 font-bold bg-white/10 px-2 rounded select-all cursor-pointer">...</span></p>
                 </div>
                 <div class="text-right">
-                    <div class="text-green-400 font-bold text-xl" id="displayPremio">R$ 0</div>
-                    <div class="text-[10px] text-gray-400 uppercase">Prêmio Total</div>
+                    <div class="text-green-400 font-bold text-xl" id="dPremio">R$ 0</div>
                 </div>
             </div>
-            <button onclick="copiarPix()" class="w-full bg-gray-800 hover:bg-gray-700 py-2 rounded-lg text-xs flex items-center justify-center gap-2 text-gray-300 transition-colors"><i class="fa-brands fa-pix"></i> Copiar Chave Pix</button>
+            <button id="btnPix" class="w-full bg-gray-800 mt-2 py-2 rounded-lg text-xs text-gray-300 hover:bg-gray-700 transition-colors">Copiar Pix</button>
         </div>
 
-        <div id="barra-status" class="bg-green-500/20 text-green-400 text-center text-sm py-2 rounded-lg mb-4 border border-green-500/30 font-bold">
-            🟢 Palpites Liberados • Edite à vontade
-        </div>
+        <div id="status-bar" class="bg-green-500/20 text-green-400 text-center text-sm py-2 rounded-lg mb-4 font-bold">Carregando...</div>
 
         <div class="flex justify-between items-center mb-4">
-            <div class="flex items-center gap-3">
-                <div id="meuAvatar" class="w-10 h-10 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center text-purple-900 font-bold shadow-lg">EU</div>
-                <div>
-                    <p class="text-xs text-gray-400">Jogador</p>
-                    <p id="nomeUsuario" class="font-bold text-white leading-none">...</p>
-                </div>
+            <div class="flex items-center gap-2">
+                <div id="meuAvatar" class="w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center text-purple-900 font-bold">EU</div>
+                <p id="meuNomeDisplay" class="font-bold text-white">...</p>
             </div>
-            <div class="bg-indigo-950 border border-indigo-800 px-3 py-1 rounded-lg text-right">
-                <p class="text-[10px] text-gray-400 uppercase tracking-wider">Faltam</p>
-                <p id="contadorPalpites" class="font-display text-yellow-400 text-xl">10</p>
-            </div>
+            <div class="bg-indigo-950 px-3 py-1 rounded-lg border border-indigo-800"><span class="text-gray-400 text-xs">FALTAM: </span><span id="dFaltam" class="text-yellow-400 font-bold">0</span></div>
         </div>
 
         <div id="lista-participantes" class="space-y-3 pb-24"></div>
-
-        <div class="fixed bottom-0 left-0 w-full p-4 bg-gradient-to-t from-[#2D1B4E] via-[#2D1B4E] to-transparent pointer-events-none">
-            <div class="max-w-md mx-auto pointer-events-auto">
-                <button id="btnConfirmar" disabled class="w-full bg-gray-600 text-gray-300 font-bold py-4 rounded-xl shadow-lg transition-all text-lg opacity-80 cursor-not-allowed">
-                    Complete os palpites...
-                </button>
-            </div>
-        </div>
     </div>
 
-    <div id="tela-ranking" class="hidden max-w-md mx-auto p-4 pb-20">
+    <div id="tela-ranking" class="hidden max-w-md mx-auto p-4 page-enter">
         <div class="text-center mb-6 mt-4">
-            <h2 class="text-3xl font-display text-yellow-400 mb-1">Resultado Final</h2>
-            <p class="text-gray-300 text-sm">Toque nos nomes para ver a <span class="text-yellow-400 font-bold">correção da prova</span></p>
+            <h2 class="text-3xl font-display text-yellow-400">Resultado</h2>
         </div>
         <div id="podio-area" class="flex justify-center items-end gap-2 mb-8 h-40"></div>
-        <div id="lista-ranking" class="space-y-3"></div>
-        <button onclick="location.reload()" class="mt-8 w-full py-4 rounded-xl border border-white/20 text-gray-400 hover:bg-white/5">Sair / Novo Jogo</button>
+        <div id="lista-ranking" class="space-y-3 pb-10"></div>
+        <button onclick="location.reload()" class="w-full py-4 border border-white/20 text-gray-400 rounded-xl hover:bg-white/5">Sair</button>
     </div>
 
     <div id="modal-selecao" class="fixed inset-0 bg-black/80 hidden z-50 flex items-end justify-center">
         <div class="bg-gray-900 w-full max-w-md rounded-t-3xl p-6 animate-[slideUp_0.3s_ease-out]">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="text-xl font-bold text-white">Quem ele(a) tirou?</h3>
-                <button onclick="fecharModal()" class="text-gray-400 hover:text-white text-2xl">&times;</button>
-            </div>
+            <div class="flex justify-between mb-4"><h3 class="text-white font-bold">Quem ele(a) tirou?</h3><button onclick="document.getElementById('modal-selecao').classList.add('hidden')" class="text-gray-400 text-xl">&times;</button></div>
             <div id="grid-opcoes" class="grid grid-cols-4 gap-4"></div>
         </div>
     </div>
 
-    <script>
-        // --- ESTADO GLOBAL ---
-        let appConfig = { salaId: null, nomeEvento: "", qtdParticipantes: 10, valorEntrada: 10, chavePix: "", usuarioNome: "" };
-        let estadoJogo = {
-            fase: 'PALPITES', // PALPITES, BLOQUEADO, REVELADO
-            palpitesUsuario: {},
-            participantes: [], // Será preenchido ao iniciar
-            gabaritoReal: {} // Será gerado na hora
+    <script type="module">
+        // --- 1. CONFIGURAÇÃO (JÁ PREENCHIDA) ---
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        import { getFirestore, doc, setDoc, getDoc, onSnapshot, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+
+        // SUAS CHAVES AQUI:
+        const firebaseConfig = {
+            apiKey: "AIzaSyBenlc9jAuGq1zsbXuraG40Vzu0bu3PT0g",
+            authDomain: "bolao-secreto.firebaseapp.com",
+            projectId: "bolao-secreto",
+            storageBucket: "bolao-secreto.firebasestorage.app",
+            messagingSenderId: "686832695980",
+            appId: "1:686832695980:web:d88b70dea07b1e3f08bd09"
         };
-        let idSelecionadoAtual = null;
 
-        // --- DADOS MOCK (NOMES PARA PREENCHER) ---
-        const nomesMock = ["Ana", "Bruno", "Carla", "Daniel", "Elisa", "Fábio", "Gabi", "Hugo", "Inês", "João", "Lucas", "Mari"];
-        const avataresMock = ["👩🏻", "👱🏻‍♂️", "👩🏽", "🧔🏻", "👩🏼", "👨🏿", "👩🏻‍🦰", "👨🏻‍🦲", "👵🏻", "👱🏿‍♂️", "🤓", "😎"];
-
-        // --- NAVEGAÇÃO ---
-        function trocarTela(atual, proxima) {
-            document.getElementById(atual).classList.add('hidden');
-            document.getElementById(proxima).classList.remove('hidden');
+        // --- 2. INICIALIZAÇÃO ---
+        let app, db;
+        try {
+            app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            console.log("Firebase Conectado com Sucesso!");
+        } catch (e) {
+            console.error("Erro Firebase:", e);
+            alert("Erro de conexão. Verifique o console.");
         }
-        function voltarHome() {
+
+        // --- 3. VARIÁVEIS DO JOGO ---
+        let dadosSala = null;
+        let meuId = null; 
+        let meuNome = null;
+        let codigoSala = null;
+        let unsubscribe = null; 
+
+        // --- 4. FUNÇÕES DE NAVEGAÇÃO ---
+        window.nav = (tela) => {
             document.querySelectorAll('.page-enter').forEach(el => el.classList.add('hidden'));
-            document.getElementById('tela-home').classList.remove('hidden');
+            document.getElementById(tela).classList.remove('hidden');
+        };
+
+        function mostrarLoading(show) {
+            const el = document.getElementById('loading');
+            if(show) el.classList.remove('hidden'); else el.classList.add('hidden');
         }
 
-        // --- CRIAÇÃO E ENTRADA ---
-        function gerarSala() {
-            const nome = document.getElementById('confNomeEvento').value;
-            const qtd = parseInt(document.getElementById('confQtd').value);
-            const valor = parseFloat(document.getElementById('confValor').value);
-            const pix = document.getElementById('confPix').value;
+        // --- 5. CRIAR SALA (ADMIN) ---
+        document.getElementById('btnCriarFinal').addEventListener('click', async () => {
+            const nomeEvento = document.getElementById('cNomeEvento').value;
+            const nomeAdmin = document.getElementById('cNomeAdmin').value;
+            const qtd = parseInt(document.getElementById('cQtd').value);
+            const valor = parseFloat(document.getElementById('cValor').value);
+            const pix = document.getElementById('cPix').value;
 
-            if(!nome || !pix) return alert("Preencha os dados do evento!");
+            if(!nomeEvento || !nomeAdmin || !pix) return alert("Preencha todos os campos!");
+            mostrarLoading(true);
 
-            appConfig = { salaId: Math.random().toString(36).substring(2, 7).toUpperCase(), nomeEvento: nome, qtdParticipantes: qtd, valorEntrada: valor, chavePix: pix, usuarioNome: "Organizador" };
-            iniciarJogo();
-        }
-
-        function acessarSala() {
-            const codigo = document.getElementById('inputCodigoSala').value;
-            const nome = document.getElementById('inputNomeParticipante').value;
-            if(!codigo || !nome) return alert("Preencha tudo!");
-
-            appConfig.salaId = codigo.toUpperCase();
-            appConfig.usuarioNome = nome;
-            appConfig.nomeEvento = "Evento de Amigos"; // Simulação
-            appConfig.chavePix = "pix@exemplo.com";
+            // Gera código aleatório para a sala
+            const codigo = Math.random().toString(36).substring(2, 8).toUpperCase();
             
-            iniciarJogo();
+            // Gera gabarito simples (Roda: 0->1, 1->2... Ultimo->0)
+            let gabarito = {};
+            for(let i=0; i<qtd; i++) {
+                gabarito[i] = (i === qtd-1) ? 0 : i+1;
+            }
+
+            // Salva no Banco de Dados
+            try {
+                await setDoc(doc(db, "salas", codigo), {
+                    admin: nomeAdmin,
+                    nomeEvento: nomeEvento,
+                    qtdMax: qtd,
+                    valor: valor,
+                    pix: pix,
+                    status: "PALPITES", // Fases: PALPITES, BLOQUEADO, REVELADO
+                    gabarito: gabarito,
+                    participantes: [{ id: 0, nome: nomeAdmin, palpites: {} }] // O Admin é o participante 0
+                });
+                
+                entrarNaSala(codigo, 0, nomeAdmin);
+            } catch (error) {
+                alert("Erro ao criar sala: " + error.message);
+                mostrarLoading(false);
+            }
+        });
+
+        // --- 6. ENTRAR NA SALA (CONVIDADO) ---
+        document.getElementById('btnEntrarFinal').addEventListener('click', async () => {
+            const codigo = document.getElementById('eCodigo').value.trim().toUpperCase();
+            const nome = document.getElementById('eNome').value.trim();
+            
+            if(!codigo || !nome) return alert("Preencha o código e seu nome!");
+            mostrarLoading(true);
+
+            const docRef = doc(db, "salas", codigo);
+            
+            try {
+                const docSnap = await getDoc(docRef);
+
+                if (docSnap.exists()) {
+                    const dados = docSnap.data();
+                    
+                    // Verifica se já está lotado
+                    if (dados.participantes.length >= dados.qtdMax) {
+                        mostrarLoading(false);
+                        return alert("A sala está cheia!");
+                    }
+                    
+                    // Adiciona o novo participante no array
+                    const novoId = dados.participantes.length;
+                    const novoParticipante = { id: novoId, nome: nome, palpites: {} };
+                    
+                    await updateDoc(docRef, {
+                        participantes: arrayUnion(novoParticipante)
+                    });
+
+                    entrarNaSala(codigo, novoId, nome);
+                } else {
+                    mostrarLoading(false);
+                    alert("Sala não encontrada! Verifique o código.");
+                }
+            } catch(e) {
+                mostrarLoading(false);
+                alert("Erro ao entrar: " + e.message);
+            }
+        });
+
+        // --- 7. LÓGICA DO JOGO (REALTIME) ---
+        function entrarNaSala(codigo, id, nome) {
+            codigoSala = codigo;
+            meuId = id;
+            meuNome = nome;
+
+            // Atualiza UI básica
+            document.getElementById('dCodigo').innerText = codigo;
+            document.getElementById('meuNomeDisplay').innerText = nome;
+            
+            // Vai para tela do jogo
+            mostrarLoading(false);
+            window.nav('tela-jogo');
+
+            // ESCUTA O BANCO DE DADOS EM TEMPO REAL
+            unsubscribe = onSnapshot(doc(db, "salas", codigo), (doc) => {
+                dadosSala = doc.data();
+                atualizarTelaJogo();
+            });
         }
 
-        // --- INICIALIZAÇÃO DO JOGO ---
-        function iniciarJogo() {
-            document.querySelectorAll('.page-enter').forEach(el => el.classList.add('hidden'));
-            document.getElementById('tela-jogo').classList.remove('hidden');
-            document.getElementById('painel-admin').classList.remove('hidden'); // MOSTRAR SIMULADOR
+        function atualizarTelaJogo() {
+            // Header Info
+            document.getElementById('dNomeEvento').innerText = dadosSala.nomeEvento;
+            document.getElementById('dPremio').innerText = `R$ ${(dadosSala.valor * dadosSala.participantes.length).toFixed(2)}`;
+            
+            // Botão Pix
+            document.getElementById('btnPix').onclick = () => {
+                navigator.clipboard.writeText(dadosSala.pix);
+                alert("Chave Pix copiada! 💸");
+            };
 
-            // Preencher Header
-            document.getElementById('displayNomeEvento').innerText = appConfig.nomeEvento;
-            document.getElementById('displayCodigo').innerText = appConfig.salaId;
-            document.getElementById('displayPremio').innerText = `R$ ${(appConfig.valorEntrada * appConfig.qtdParticipantes).toFixed(2)}`;
-            document.getElementById('nomeUsuario').innerText = appConfig.usuarioNome;
-            document.getElementById('meuAvatar').innerText = appConfig.usuarioNome.substring(0,2).toUpperCase();
+            // Controle de Status e Admin
+            const statusDiv = document.getElementById('status-bar');
+            const painelAdmin = document.getElementById('painel-admin');
+            
+            // Se eu sou o Admin (ID 0), mostra o painel
+            if(meuId === 0) {
+                painelAdmin.classList.remove('hidden');
+                document.getElementById('btnAdminBloquear').onclick = () => mudarStatus('BLOQUEADO');
+                document.getElementById('btnAdminRevelar').onclick = () => mudarStatus('REVELADO');
+            }
 
-            // Gerar Participantes e Gabarito (Mock)
-            gerarParticipantesEGabarito();
+            // Atualiza barra de status
+            if(dadosSala.status === 'PALPITES') {
+                statusDiv.innerText = "🟢 Palpites Liberados";
+                statusDiv.className = "bg-green-500/20 text-green-400 text-center text-sm py-2 rounded-lg mb-4 font-bold border border-green-500/30";
+            } else if (dadosSala.status === 'BLOQUEADO') {
+                statusDiv.innerText = "🔒 Bloqueado (Aguardando)";
+                statusDiv.className = "bg-red-500/20 text-red-400 text-center text-sm py-2 rounded-lg mb-4 font-bold border border-red-500/30";
+            } else if (dadosSala.status === 'REVELADO') {
+                calcularEExibirRanking();
+                return; // Para de renderizar a lista de jogo
+            }
+
             renderizarLista();
         }
 
-        function gerarParticipantesEGabarito() {
-            estadoJogo.participantes = [];
-            
-            // Cria lista baseada na quantidade escolhida
-            for(let i=0; i < appConfig.qtdParticipantes; i++) {
-                estadoJogo.participantes.push({
-                    id: i+1,
-                    nome: nomesMock[i % nomesMock.length],
-                    avatar: avataresMock[i % avataresMock.length]
-                });
-            }
-
-            // Gera Gabarito: 1->2, 2->3 ... Ultimo->1
-            estadoJogo.gabaritoReal = {};
-            for(let i=0; i < appConfig.qtdParticipantes; i++) {
-                const atual = estadoJogo.participantes[i].id;
-                const proximo = (i === appConfig.qtdParticipantes - 1) ? estadoJogo.participantes[0].id : estadoJogo.participantes[i+1].id;
-                estadoJogo.gabaritoReal[atual] = proximo;
-            }
-        }
-
-        // --- LÓGICA DE JOGO (RENDERIZAÇÃO) ---
         function renderizarLista() {
             const container = document.getElementById('lista-participantes');
             container.innerHTML = '';
             
-            estadoJogo.participantes.forEach(p => {
-                const palpiteId = estadoJogo.palpitesUsuario[p.id];
-                const palpitePessoa = palpiteId ? estadoJogo.participantes.find(x => x.id === palpiteId) : null;
+            const euParticipante = dadosSala.participantes.find(p => p.id === meuId);
+            const meusPalpites = euParticipante ? euParticipante.palpites : {};
+            
+            // Atualiza contador "Faltam X"
+            // Conta quantos participantes existem MENOS 1 (eu mesmo) MENOS quantos palpites já fiz
+            let totalPossivel = Math.max(0, dadosSala.participantes.length - 1);
+            let feitos = 0;
+            // Verifica quantos dos meus palpites são válidos para pessoas que estão na sala
+            for (const [key, value] of Object.entries(meusPalpites)) {
+                if (dadosSala.participantes.some(p => p.id == key)) feitos++;
+            }
+            
+            document.getElementById('dFaltam').innerText = Math.max(0, totalPossivel - feitos);
+
+            // Gera os cards
+            dadosSala.participantes.forEach(p => {
+                // Lógica de visualização do palpite
+                const palpiteFeitoId = meusPalpites[p.id]; 
+                const palpitePessoa = palpiteFeitoId !== undefined ? dadosSala.participantes.find(x => x.id === palpiteFeitoId) : null;
                 
-                // Controle de fase
-                const bloqueado = estadoJogo.fase === 'BLOQUEADO' || estadoJogo.fase === 'REVELADO';
-                const clickAction = bloqueado ? "alert('Edição bloqueada!')" : `abrirSelecao(${p.id})`;
-                const cursor = bloqueado ? 'cursor-not-allowed opacity-60' : 'cursor-pointer hover:bg-white/10';
+                let htmlPalpite = `<span class="text-2xl text-gray-600">?</span>`;
+                if(palpitePessoa) {
+                    htmlPalpite = `<span class="font-bold text-green-400 truncate text-sm">${palpitePessoa.nome}</span>`;
+                }
+
+                // Configurações de clique
+                let clickAttr = '';
+                let cursorClass = 'cursor-default opacity-60';
+                
+                // Só posso clicar se: Fase Palpites E não for eu mesmo
+                if(dadosSala.status === 'PALPITES' && p.id !== meuId) {
+                     cursorClass = 'cursor-pointer hover:bg-white/10';
+                     clickAttr = `data-id="${p.id}"`; 
+                }
 
                 container.innerHTML += `
                     <div class="bg-white/5 border border-white/10 rounded-2xl p-3 flex items-center justify-between transition-all">
                         <div class="flex items-center gap-3 w-1/2">
-                            <div class="text-2xl bg-indigo-800 w-12 h-12 rounded-full flex items-center justify-center shadow-lg border-2 border-indigo-600">${p.avatar}</div>
-                            <span class="font-bold text-gray-200 truncate">${p.nome}</span>
+                            <div class="w-8 h-8 bg-indigo-800 rounded-full flex items-center justify-center font-bold text-xs shadow text-white border border-indigo-600">${p.nome.substring(0,2).toUpperCase()}</div>
+                            <span class="font-bold text-gray-200 truncate text-sm">${p.nome}</span>
                         </div>
                         <div class="text-gray-500">➜</div>
-                        <div onclick="${clickAction}" class="w-1/2 relative group ${cursor}">
-                            <div class="${palpitePessoa ? 'bg-green-500/20 border-green-500' : 'bg-dashed border-gray-600'} border-2 border-dashed rounded-xl p-2 flex items-center justify-center gap-2 h-14 transition-all">
-                                ${palpitePessoa ? `<span class="text-xl">${palpitePessoa.avatar}</span> <span class="font-bold text-green-400 truncate">${palpitePessoa.nome}</span>` : `<span class="text-2xl text-gray-600">?</span>`}
+                        <div class="w-1/2 relative group ${cursorClass} card-palpite" ${clickAttr}>
+                            <div class="${palpitePessoa ? 'bg-green-500/20 border-green-500' : 'bg-dashed border-gray-600'} border-2 border-dashed rounded-xl p-2 flex items-center justify-center gap-2 h-12 transition-all">
+                                ${htmlPalpite}
                             </div>
                         </div>
                     </div>`;
             });
-            atualizarBotao();
+
+            // Adiciona eventos de clique nos cards
+            document.querySelectorAll('.card-palpite').forEach(el => {
+                el.addEventListener('click', (e) => {
+                    const idAlvo = parseInt(el.getAttribute('data-id'));
+                    if(!isNaN(idAlvo)) abrirSelecao(idAlvo);
+                });
+            });
         }
 
-        function abrirSelecao(id) {
-            idSelecionadoAtual = id;
+        // --- 8. SELEÇÃO DE PALPITE ---
+        window.abrirSelecao = (idDeQuemTirou) => {
+            const modal = document.getElementById('modal-selecao');
             const grid = document.getElementById('grid-opcoes');
             grid.innerHTML = '';
-            estadoJogo.participantes.forEach(p => {
-                if (p.id === id) return;
-                const isSelected = estadoJogo.palpitesUsuario[idSelecionadoAtual] === p.id;
-                grid.innerHTML += `
-                    <button onclick="fazerPalpite(${p.id})" class="flex flex-col items-center gap-2 p-2 rounded-xl transition-all ${isSelected ? 'bg-green-600 scale-105' : 'bg-white/10 hover:bg-white/20'}">
-                        <span class="text-3xl">${p.avatar}</span>
-                        <span class="text-xs font-bold ${isSelected ? 'text-white' : 'text-gray-300'}">${p.nome}</span>
-                    </button>`;
-            });
-            document.getElementById('modal-selecao').classList.remove('hidden');
-        }
-
-        function fazerPalpite(id) {
-            estadoJogo.palpitesUsuario[idSelecionadoAtual] = id;
-            fecharModal();
-            renderizarLista();
-        }
-
-        function fecharModal() { document.getElementById('modal-selecao').classList.add('hidden'); }
-
-        function atualizarBotao() {
-            const faltam = appConfig.qtdParticipantes - Object.keys(estadoJogo.palpitesUsuario).length;
-            document.getElementById('contadorPalpites').innerText = faltam;
-            const btn = document.getElementById('btnConfirmar');
-
-            if (estadoJogo.fase === 'BLOQUEADO') {
-                btn.innerText = "AGUARDANDO REVELAÇÃO... ⏳";
-                btn.className = "w-full bg-gray-500 text-white font-bold py-4 rounded-xl shadow-lg";
-                btn.onclick = null;
-            } else if (faltam === 0) {
-                btn.innerText = "TUDO PRONTO ✅";
-                btn.className = "w-full bg-yellow-400 hover:bg-yellow-300 text-purple-900 font-bold py-4 rounded-xl shadow-lg transition-all text-xl cursor-pointer";
-                btn.disabled = false;
-                btn.onclick = () => alert("Palpites salvos! Aguarde o organizador liberar o resultado.");
-            } else {
-                btn.innerText = `Faltam ${faltam} palpites...`;
-                btn.className = "w-full bg-gray-700 text-gray-400 font-bold py-4 rounded-xl cursor-not-allowed opacity-80";
-                btn.disabled = true;
-            }
-        }
-
-        function copiarPix() {
-            navigator.clipboard.writeText(appConfig.chavePix);
-            alert("Chave Pix copiada!");
-        }
-
-        // --- SIMULADOR / ADMIN ---
-        function mudarFase(novaFase) {
-            estadoJogo.fase = novaFase;
-            const status = document.getElementById('barra-status');
             
-            if(novaFase === 'BLOQUEADO') {
-                status.innerHTML = "🔒 Palpites Encerrados (1h antes)";
-                status.className = "bg-red-500/20 text-red-400 text-center text-sm py-2 rounded-lg mb-4 border border-red-500/30 font-bold";
-            } else if (novaFase === 'PALPITES') {
-                status.innerHTML = "🟢 Palpites Liberados";
-                status.className = "bg-green-500/20 text-green-400 text-center text-sm py-2 rounded-lg mb-4 border border-green-500/30 font-bold";
-            }
-            renderizarLista();
+            dadosSala.participantes.forEach(p => {
+                if(p.id === idDeQuemTirou) return; // Ninguém tira a si mesmo
+                
+                const btn = document.createElement('button');
+                btn.className = "flex flex-col items-center gap-2 p-2 rounded-xl bg-white/10 hover:bg-white/20 transition-all active:scale-95";
+                btn.innerHTML = `<div class="w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center text-white font-bold border-2 border-purple-400 shadow">${p.nome.substring(0,2).toUpperCase()}</div><span class="text-xs font-bold text-gray-300 truncate w-full text-center">${p.nome}</span>`;
+                btn.onclick = () => enviarPalpite(idDeQuemTirou, p.id);
+                grid.appendChild(btn);
+            });
+            modal.classList.remove('hidden');
         }
 
-        function calcularResultado() {
-            estadoJogo.fase = 'REVELADO';
-            document.getElementById('tela-jogo').classList.add('hidden');
-            document.getElementById('tela-ranking').classList.remove('hidden');
-            document.getElementById('painel-admin').classList.add('hidden');
+        async function enviarPalpite(quemTirou, palpiteId) {
+            document.getElementById('modal-selecao').classList.add('hidden');
+            
+            // Clona o array de participantes para editar
+            const novaLista = [...dadosSala.participantes];
+            // Encontra meu índice
+            const meuIndex = novaLista.findIndex(p => p.id === meuId);
+            
+            // Atualiza meu objeto de palpites
+            if(!novaLista[meuIndex].palpites) novaLista[meuIndex].palpites = {};
+            novaLista[meuIndex].palpites[quemTirou] = palpiteId;
 
-            // 1. Gera Placar (Usuário + Bots)
+            // Envia update ao Firebase
+            try {
+                await updateDoc(doc(db, "salas", codigoSala), {
+                    participantes: novaLista
+                });
+            } catch(e) {
+                console.error("Erro ao salvar palpite:", e);
+                alert("Erro de conexão ao salvar.");
+            }
+        }
+
+        async function mudarStatus(novoStatus) {
+            try {
+                await updateDoc(doc(db, "salas", codigoSala), { status: novoStatus });
+            } catch(e) {
+                alert("Erro ao mudar status.");
+            }
+        }
+
+        // --- 9. RANKING E FINALIZAÇÃO ---
+        function calcularEExibirRanking() {
+            window.nav('tela-ranking');
+            const container = document.getElementById('lista-ranking');
+            const podio = document.getElementById('podio-area');
+            container.innerHTML = '';
+            
             let ranking = [];
             
-            // Adiciona Usuário
-            ranking.push({
-                nome: appConfig.usuarioNome + " (Você)",
-                avatar: "👤",
-                pontos: calcularPontos(estadoJogo.palpitesUsuario),
-                palpites: estadoJogo.palpitesUsuario,
-                isUser: true
+            // Calcula pontos
+            dadosSala.participantes.forEach(p => {
+                let pontos = 0;
+                let detalhes = [];
+                
+                if(p.palpites) {
+                    for (const [quem, chute] of Object.entries(p.palpites)) {
+                        const correto = dadosSala.gabarito[quem];
+                        // Verifica se acertou
+                        if(parseInt(chute) === correto) pontos++;
+                    }
+                }
+                ranking.push({ nome: p.nome, pontos: pontos, palpites: p.palpites });
             });
 
-            // Adiciona Bots para preencher
-            for(let i=0; i < appConfig.qtdParticipantes - 1; i++) {
-                const palpitesBot = gerarPalpitesAleatorios();
-                ranking.push({
-                    nome: "Participante " + (i+1),
-                    avatar: "🤖",
-                    pontos: calcularPontos(palpitesBot),
-                    palpites: palpitesBot,
-                    isUser: false
-                });
-            }
-
+            // Ordena
             ranking.sort((a,b) => b.pontos - a.pontos);
-            exibirRanking(ranking);
-        }
 
-        function calcularPontos(palpites) {
-            let pts = 0;
-            for(const [quem, palpite] of Object.entries(palpites)) {
-                if(estadoJogo.gabaritoReal[quem] == palpite) pts++;
-            }
-            return pts;
-        }
-
-        function gerarPalpitesAleatorios() {
-            let p = {};
-            estadoJogo.participantes.forEach(part => {
-                p[part.id] = Math.floor(Math.random() * appConfig.qtdParticipantes) + 1;
-            });
-            return p;
-        }
-
-        function exibirRanking(ranking) {
-            // Pódio Top 3
-            const podio = document.getElementById('podio-area');
+            // Monta Pódio (Top 3)
             podio.innerHTML = `
-                <div class="flex flex-col items-center"><div class="text-3xl mb-1">🥈</div><div class="bg-gray-400/20 p-2 rounded-t-lg h-24 flex items-end font-bold w-20 justify-center text-sm">${ranking[1]?.nome.split(' ')[0] || '-'}</div></div>
-                <div class="flex flex-col items-center -mt-4"><div class="text-4xl mb-1">🥇</div><div class="bg-yellow-400/20 border-2 border-yellow-400 p-2 rounded-t-lg h-32 flex items-end font-bold text-yellow-400 w-24 justify-center">${ranking[0]?.nome.split(' ')[0] || '-'}</div></div>
-                <div class="flex flex-col items-center"><div class="text-3xl mb-1">🥉</div><div class="bg-orange-700/20 p-2 rounded-t-lg h-16 flex items-end font-bold w-20 justify-center text-sm">${ranking[2]?.nome.split(' ')[0] || '-'}</div></div>
+                <div class="flex flex-col items-center"><div class="text-3xl mb-1">🥈</div><div class="bg-gray-400/20 p-2 rounded-t-lg h-24 flex items-end justify-center font-bold w-20 text-sm text-gray-300">${ranking[1]?.nome.split(' ')[0] || '-'}</div></div>
+                <div class="flex flex-col items-center -mt-4"><div class="text-4xl mb-1">🥇</div><div class="bg-yellow-400/20 border-2 border-yellow-400 p-2 rounded-t-lg h-32 flex items-end justify-center font-bold text-yellow-400 w-24 shadow-[0_0_15px_rgba(250,204,21,0.3)]">${ranking[0]?.nome.split(' ')[0] || '-'}</div></div>
+                <div class="flex flex-col items-center"><div class="text-3xl mb-1">🥉</div><div class="bg-orange-700/20 p-2 rounded-t-lg h-16 flex items-end justify-center font-bold w-20 text-sm text-orange-300">${ranking[2]?.nome.split(' ')[0] || '-'}</div></div>
             `;
 
-            // Lista Completa
-            const lista = document.getElementById('lista-ranking');
-            lista.innerHTML = '';
+            // Monta Lista Completa
             ranking.forEach((r, idx) => {
+                // Detalhes da correção (Accordion)
                 let htmlDetalhes = '<div class="mt-4 grid grid-cols-1 gap-2 bg-black/20 p-3 rounded-xl">';
-                estadoJogo.participantes.forEach(p => {
-                    const palpiteFeito = r.palpites[p.id];
-                    const correto = estadoJogo.gabaritoReal[p.id];
-                    const acertou = palpiteFeito == correto;
-                    const nomeChutado = estadoJogo.participantes.find(x=>x.id == palpiteFeito)?.nome || "?";
+                
+                // Mostra acertos e erros
+                dadosSala.participantes.forEach(p => {
+                    const palpiteFeito = r.palpites ? r.palpites[p.id] : undefined;
+                    const correto = dadosSala.gabarito[p.id];
+                    const acertou = parseInt(palpiteFeito) === correto;
                     
-                    htmlDetalhes += `<div class="flex justify-between text-xs border-b border-white/5 pb-1"><span class="text-gray-400">${p.nome} tirou...</span><span class="${acertou?'text-green-400 font-bold':'text-red-400'}">${nomeChutado} ${acertou?'✅':'❌'}</span></div>`;
+                    // Nome de quem foi chutado
+                    const nomeChutado = dadosSala.participantes.find(x=>x.id == palpiteFeito)?.nome || "?";
+                    
+                    htmlDetalhes += `
+                        <div class="flex justify-between text-xs border-b border-white/5 pb-1">
+                            <span class="text-gray-400">${p.nome} tirou...</span>
+                            <span class="${acertou?'text-green-400 font-bold':'text-red-400'}">${nomeChutado} ${acertou?'✅':'❌'}</span>
+                        </div>`;
                 });
                 htmlDetalhes += '</div>';
 
-                lista.innerHTML += `
+                container.innerHTML += `
                     <details class="bg-white/5 border border-white/10 rounded-2xl overflow-hidden group">
-                        <summary class="p-4 flex items-center justify-between">
+                        <summary class="p-4 flex items-center justify-between hover:bg-white/5 transition-colors">
                             <div class="flex items-center gap-3">
-                                <div class="text-gray-500 font-bold w-4">${idx+1}º</div>
-                                <div class="text-xl">${r.avatar}</div>
-                                <div><div class="font-bold ${r.isUser?'text-yellow-400':'text-gray-200'}">${r.nome}</div></div>
+                                <div class="text-gray-500 font-bold w-6 text-center">${idx+1}º</div>
+                                <div class="w-8 h-8 bg-indigo-700 rounded-full flex items-center justify-center text-xs font-bold">${r.nome.substring(0,2)}</div>
+                                <div class="font-bold text-gray-200">${r.nome}</div>
                             </div>
-                            <div class="flex items-center gap-3"><span class="font-bold text-xl">${r.pontos}</span><div class="rotate-icon text-gray-500">▼</div></div>
+                            <div class="flex items-center gap-3"><span class="font-bold text-xl text-yellow-400">${r.pontos}</span><div class="text-xs text-gray-500">pts</div></div>
                         </summary>
                         <div class="px-4 pb-4">${htmlDetalhes}</div>
                     </details>
