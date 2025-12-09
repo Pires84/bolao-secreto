@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bolão Amigo Secreto - Online</title>
+    <title>Bolão Amigo Secreto</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
@@ -21,14 +21,17 @@
 <body class="bg-[#2D1B4E] min-h-screen pb-10">
 
     <div id="loading" class="fixed inset-0 bg-[#2D1B4E] z-[60] flex items-center justify-center hidden">
-        <div class="animate-spin text-4xl text-yellow-400">⏳</div>
+        <div class="flex flex-col items-center">
+            <div class="animate-spin text-4xl text-yellow-400 mb-4">⏳</div>
+            <p id="loading-text" class="text-gray-400 text-sm">Carregando...</p>
+        </div>
     </div>
 
     <div id="painel-admin" class="hidden fixed top-0 right-0 p-2 z-50">
         <div class="bg-gray-800 p-2 rounded-lg text-xs shadow-xl border border-gray-600 flex flex-col gap-1">
             <p class="mb-1 text-gray-400 font-bold text-center">ADMIN</p>
-            <button id="btnAdminBloquear" class="bg-red-600 px-2 py-1 rounded text-white hover:bg-red-500">Bloquear Palpites</button>
-            <button id="btnAdminRevelar" class="bg-yellow-600 px-2 py-1 rounded text-white hover:bg-yellow-500">Revelar Resultado</button>
+            <button id="btnAdminBloquear" class="bg-red-600 px-2 py-1 rounded text-white hover:bg-red-500">Bloquear</button>
+            <button id="btnAdminRevelar" class="bg-yellow-600 px-2 py-1 rounded text-white hover:bg-yellow-500">Revelar</button>
         </div>
     </div>
 
@@ -40,6 +43,14 @@
             <h1 class="text-4xl text-yellow-400 mb-2 font-display">Bolão Secreto</h1>
             <p class="text-gray-300">Multiplayer Online</p>
         </div>
+        
+        <div id="area-reconectar" class="w-full max-w-sm mb-4 hidden">
+            <button onclick="reconectarSessao()" class="w-full bg-green-500 hover:bg-green-400 text-white font-bold text-lg py-3 rounded-2xl shadow-lg border border-green-400 flex items-center justify-center gap-2 animate-pulse">
+                <i class="fa-solid fa-rotate-right"></i> VOLTAR PARA A SALA
+            </button>
+            <p class="text-center text-xs text-gray-500 mt-2">Você já estava num jogo.</p>
+        </div>
+
         <div class="w-full max-w-sm space-y-4">
             <button onclick="nav('tela-criar')" class="w-full bg-yellow-400 hover:bg-yellow-300 text-purple-900 font-bold text-xl py-4 rounded-2xl shadow-lg flex items-center justify-center gap-3"><i class="fa-solid fa-plus-circle"></i> CRIAR SALA</button>
             <button onclick="nav('tela-entrar')" class="w-full bg-indigo-800 hover:bg-indigo-700 text-white font-bold text-xl py-4 rounded-2xl shadow-lg border border-indigo-600 flex items-center justify-center gap-3"><i class="fa-solid fa-ticket"></i> ENTRAR</button>
@@ -72,17 +83,37 @@
     </div>
 
     <div id="tela-jogo" class="hidden max-w-md mx-auto p-4 page-enter">
-        <div class="bg-indigo-900/50 p-4 rounded-2xl mb-4 border border-indigo-500/30">
-            <div class="flex justify-between">
+        <div class="flex justify-between items-center mb-4 mt-2">
+            <button onclick="sairDaSala()" class="text-xs text-red-400 border border-red-900 px-3 py-1 rounded-full hover:bg-red-900/50">
+                <i class="fa-solid fa-right-from-bracket"></i> Sair
+            </button>
+            <div class="text-xs text-gray-500">Bolão Online</div>
+        </div>
+
+        <div class="bg-indigo-900/50 p-4 rounded-2xl mb-4 border border-indigo-500/30 relative overflow-hidden">
+            <div class="flex justify-between relative z-10">
                 <div>
                     <h3 id="dNomeEvento" class="font-bold text-lg text-white">...</h3>
-                    <p class="text-xs text-gray-400">Código: <span id="dCodigo" class="text-yellow-400 font-bold bg-white/10 px-2 rounded select-all cursor-pointer">...</span></p>
+                    <p class="text-xs text-gray-400 mb-1">Código da Sala:</p>
+                    <div onclick="copiarCodigo()" class="flex items-center gap-2 bg-black/30 px-3 py-1 rounded-lg cursor-pointer hover:bg-black/50 transition-colors w-fit">
+                        <span id="dCodigo" class="text-yellow-400 font-display text-xl tracking-wider">...</span>
+                        <i class="fa-regular fa-copy text-gray-400 text-xs"></i>
+                    </div>
                 </div>
                 <div class="text-right">
                     <div class="text-green-400 font-bold text-xl" id="dPremio">R$ 0</div>
+                    <div class="text-[10px] text-gray-400 uppercase">Prêmio Total</div>
                 </div>
             </div>
-            <button id="btnPix" class="w-full bg-gray-800 mt-2 py-2 rounded-lg text-xs text-gray-300 hover:bg-gray-700 transition-colors">Copiar Pix</button>
+            
+            <div class="grid grid-cols-2 gap-2 mt-4 relative z-10">
+                <button id="btnCompartilhar" class="bg-indigo-600 hover:bg-indigo-500 py-2 rounded-lg text-xs text-white font-bold flex items-center justify-center gap-2 transition-colors">
+                    <i class="fa-brands fa-whatsapp text-lg"></i> Convidar
+                </button>
+                <button id="btnPix" class="bg-gray-700 hover:bg-gray-600 py-2 rounded-lg text-xs text-gray-200 flex items-center justify-center gap-2 transition-colors">
+                    <i class="fa-brands fa-pix"></i> Pagar
+                </button>
+            </div>
         </div>
 
         <div id="status-bar" class="bg-green-500/20 text-green-400 text-center text-sm py-2 rounded-lg mb-4 font-bold">Carregando...</div>
@@ -104,7 +135,10 @@
         </div>
         <div id="podio-area" class="flex justify-center items-end gap-2 mb-8 h-40"></div>
         <div id="lista-ranking" class="space-y-3 pb-10"></div>
-        <button onclick="location.reload()" class="w-full py-4 border border-white/20 text-gray-400 rounded-xl hover:bg-white/5">Sair</button>
+        <div class="grid grid-cols-2 gap-4">
+             <button onclick="sairDaSala()" class="w-full py-4 border border-red-500/30 text-red-400 rounded-xl hover:bg-red-900/20">Sair</button>
+             <button onclick="location.reload()" class="w-full py-4 border border-white/20 text-gray-400 rounded-xl hover:bg-white/5">Atualizar</button>
+        </div>
     </div>
 
     <div id="modal-selecao" class="fixed inset-0 bg-black/80 hidden z-50 flex items-end justify-center">
@@ -115,11 +149,10 @@
     </div>
 
     <script type="module">
-        // --- 1. CONFIGURAÇÃO (JÁ PREENCHIDA) ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
         import { getFirestore, doc, setDoc, getDoc, onSnapshot, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
-        // SUAS CHAVES AQUI:
+        // SUAS CHAVES DO FIREBASE JÁ INSERIDAS:
         const firebaseConfig = {
             apiKey: "AIzaSyBenlc9jAuGq1zsbXuraG40Vzu0bu3PT0g",
             authDomain: "bolao-secreto.firebaseapp.com",
@@ -129,36 +162,99 @@
             appId: "1:686832695980:web:d88b70dea07b1e3f08bd09"
         };
 
-        // --- 2. INICIALIZAÇÃO ---
+        // --- INICIALIZAÇÃO ---
         let app, db;
         try {
             app = initializeApp(firebaseConfig);
             db = getFirestore(app);
-            console.log("Firebase Conectado com Sucesso!");
-        } catch (e) {
-            console.error("Erro Firebase:", e);
-            alert("Erro de conexão. Verifique o console.");
-        }
+            console.log("Firebase OK");
+        } catch (e) { alert("Erro config Firebase"); }
 
-        // --- 3. VARIÁVEIS DO JOGO ---
+        // --- VARIÁVEIS ---
         let dadosSala = null;
         let meuId = null; 
         let meuNome = null;
         let codigoSala = null;
         let unsubscribe = null; 
 
-        // --- 4. FUNÇÕES DE NAVEGAÇÃO ---
+        // --- VERIFICAÇÃO DE SESSÃO (PERSISTÊNCIA) ---
+        window.addEventListener('load', () => {
+            const sessao = localStorage.getItem('bolao_sessao');
+            if(sessao) {
+                const dados = JSON.parse(sessao);
+                document.getElementById('area-reconectar').classList.remove('hidden');
+                // Opcional: Auto-conectar direto (comentei para dar opção de voltar)
+                // reconectarSessao(); 
+            }
+        });
+
+        window.reconectarSessao = async () => {
+            const sessao = JSON.parse(localStorage.getItem('bolao_sessao'));
+            if(sessao && sessao.codigo && sessao.id !== null) {
+                mostrarLoading(true, "Reconectando...");
+                // Verifica se sala ainda existe
+                try {
+                    const docSnap = await getDoc(doc(db, "salas", sessao.codigo));
+                    if(docSnap.exists()) {
+                        entrarNaSala(sessao.codigo, sessao.id, sessao.nome);
+                    } else {
+                        alert("Essa sala não existe mais.");
+                        sairDaSala();
+                    }
+                } catch(e) {
+                    mostrarLoading(false);
+                    alert("Erro ao reconectar.");
+                }
+            }
+        };
+
+        window.sairDaSala = () => {
+            if(confirm("Deseja sair da sala? Você precisará do código para entrar novamente.")) {
+                if(unsubscribe) unsubscribe(); // Para de ouvir o firebase
+                localStorage.removeItem('bolao_sessao'); // Limpa memória
+                location.reload(); // Recarrega página
+            }
+        };
+
+        // --- NAVEGAÇÃO ---
         window.nav = (tela) => {
             document.querySelectorAll('.page-enter').forEach(el => el.classList.add('hidden'));
             document.getElementById(tela).classList.remove('hidden');
         };
 
-        function mostrarLoading(show) {
+        function mostrarLoading(show, text="Carregando...") {
             const el = document.getElementById('loading');
+            document.getElementById('loading-text').innerText = text;
             if(show) el.classList.remove('hidden'); else el.classList.add('hidden');
         }
 
-        // --- 5. CRIAR SALA (ADMIN) ---
+        // --- BOTÃO COMPARTILHAR ---
+        document.getElementById('btnCompartilhar').addEventListener('click', async () => {
+            const url = window.location.href; // Pega o link atual do site
+            const textoShare = `🎁 Bolão Amigo Secreto!\nEntra na minha sala: *${codigoSala}*\nAcede aqui: ${url}`;
+            
+            // Tenta usar a API nativa do telemóvel
+            if (navigator.share) {
+                try {
+                    await navigator.share({
+                        title: 'Bolão Secreto',
+                        text: textoShare,
+                        url: url
+                    });
+                } catch (err) { console.log('Cancelado'); }
+            } else {
+                // Fallback: Copia para clipboard e avisa
+                navigator.clipboard.writeText(textoShare);
+                alert("Link e convite copiados! Cole no WhatsApp.");
+            }
+        });
+
+        window.copiarCodigo = () => {
+            navigator.clipboard.writeText(codigoSala);
+            alert("Código copiado!");
+        }
+
+        // --- CRIAR SALA ---
         document.getElementById('btnCriarFinal').addEventListener('click', async () => {
             const nomeEvento = document.getElementById('cNomeEvento').value;
             const nomeAdmin = document.getElementById('cNomeAdmin').value;
@@ -167,170 +263,147 @@
             const pix = document.getElementById('cPix').value;
 
             if(!nomeEvento || !nomeAdmin || !pix) return alert("Preencha todos os campos!");
-            mostrarLoading(true);
+            mostrarLoading(true, "Criando sala...");
 
-            // Gera código aleatório para a sala
             const codigo = Math.random().toString(36).substring(2, 8).toUpperCase();
-            
-            // Gera gabarito simples (Roda: 0->1, 1->2... Ultimo->0)
             let gabarito = {};
-            for(let i=0; i<qtd; i++) {
-                gabarito[i] = (i === qtd-1) ? 0 : i+1;
-            }
+            for(let i=0; i<qtd; i++) gabarito[i] = (i === qtd-1) ? 0 : i+1;
 
-            // Salva no Banco de Dados
             try {
                 await setDoc(doc(db, "salas", codigo), {
-                    admin: nomeAdmin,
-                    nomeEvento: nomeEvento,
-                    qtdMax: qtd,
-                    valor: valor,
-                    pix: pix,
-                    status: "PALPITES", // Fases: PALPITES, BLOQUEADO, REVELADO
-                    gabarito: gabarito,
-                    participantes: [{ id: 0, nome: nomeAdmin, palpites: {} }] // O Admin é o participante 0
+                    admin: nomeAdmin, nomeEvento, qtdMax: qtd, valor, pix,
+                    status: "PALPITES", gabarito,
+                    participantes: [{ id: 0, nome: nomeAdmin, palpites: {} }]
                 });
-                
                 entrarNaSala(codigo, 0, nomeAdmin);
             } catch (error) {
-                alert("Erro ao criar sala: " + error.message);
+                alert("Erro: " + error.message);
                 mostrarLoading(false);
             }
         });
 
-        // --- 6. ENTRAR NA SALA (CONVIDADO) ---
+        // --- ENTRAR SALA ---
         document.getElementById('btnEntrarFinal').addEventListener('click', async () => {
             const codigo = document.getElementById('eCodigo').value.trim().toUpperCase();
             const nome = document.getElementById('eNome').value.trim();
-            
-            if(!codigo || !nome) return alert("Preencha o código e seu nome!");
-            mostrarLoading(true);
+            if(!codigo || !nome) return alert("Preencha tudo!");
+            mostrarLoading(true, "Entrando...");
 
             const docRef = doc(db, "salas", codigo);
-            
             try {
                 const docSnap = await getDoc(docRef);
-
                 if (docSnap.exists()) {
                     const dados = docSnap.data();
                     
-                    // Verifica se já está lotado
+                    // Verifica se esse nome JÁ existe na sala (Recuperação manual)
+                    const usuarioExistente = dados.participantes.find(p => p.nome.toUpperCase() === nome.toUpperCase());
+                    
+                    if(usuarioExistente) {
+                        // Se o nome já existe, assume que é a mesma pessoa voltando
+                        if(confirm(`Já existe um "${usuarioExistente.nome}" na sala. É você?`)) {
+                            entrarNaSala(codigo, usuarioExistente.id, usuarioExistente.nome);
+                            return;
+                        } else {
+                            mostrarLoading(false);
+                            return alert("Escolha outro nome.");
+                        }
+                    }
+
                     if (dados.participantes.length >= dados.qtdMax) {
                         mostrarLoading(false);
-                        return alert("A sala está cheia!");
+                        return alert("Sala lotada!");
                     }
                     
-                    // Adiciona o novo participante no array
                     const novoId = dados.participantes.length;
-                    const novoParticipante = { id: novoId, nome: nome, palpites: {} };
-                    
-                    await updateDoc(docRef, {
-                        participantes: arrayUnion(novoParticipante)
-                    });
-
+                    await updateDoc(docRef, { participantes: arrayUnion({ id: novoId, nome: nome, palpites: {} }) });
                     entrarNaSala(codigo, novoId, nome);
                 } else {
                     mostrarLoading(false);
-                    alert("Sala não encontrada! Verifique o código.");
+                    alert("Sala não encontrada!");
                 }
-            } catch(e) {
-                mostrarLoading(false);
-                alert("Erro ao entrar: " + e.message);
-            }
+            } catch(e) { mostrarLoading(false); alert("Erro: " + e.message); }
         });
 
-        // --- 7. LÓGICA DO JOGO (REALTIME) ---
+        // --- LÓGICA DE JOGO ---
         function entrarNaSala(codigo, id, nome) {
             codigoSala = codigo;
             meuId = id;
             meuNome = nome;
 
-            // Atualiza UI básica
+            // SALVAR SESSÃO NO NAVEGADOR (LocalStorage)
+            localStorage.setItem('bolao_sessao', JSON.stringify({ codigo, id, nome }));
+
             document.getElementById('dCodigo').innerText = codigo;
             document.getElementById('meuNomeDisplay').innerText = nome;
-            
-            // Vai para tela do jogo
             mostrarLoading(false);
             window.nav('tela-jogo');
 
-            // ESCUTA O BANCO DE DADOS EM TEMPO REAL
+            if(unsubscribe) unsubscribe(); // Limpa listener anterior se houver
             unsubscribe = onSnapshot(doc(db, "salas", codigo), (doc) => {
-                dadosSala = doc.data();
-                atualizarTelaJogo();
+                if(doc.exists()) {
+                    dadosSala = doc.data();
+                    atualizarTelaJogo();
+                } else {
+                    alert("A sala foi encerrada.");
+                    sairDaSala();
+                }
             });
         }
 
         function atualizarTelaJogo() {
-            // Header Info
             document.getElementById('dNomeEvento').innerText = dadosSala.nomeEvento;
             document.getElementById('dPremio').innerText = `R$ ${(dadosSala.valor * dadosSala.participantes.length).toFixed(2)}`;
             
-            // Botão Pix
             document.getElementById('btnPix').onclick = () => {
                 navigator.clipboard.writeText(dadosSala.pix);
-                alert("Chave Pix copiada! 💸");
+                alert("Chave Pix copiada!");
             };
 
-            // Controle de Status e Admin
             const statusDiv = document.getElementById('status-bar');
             const painelAdmin = document.getElementById('painel-admin');
             
-            // Se eu sou o Admin (ID 0), mostra o painel
             if(meuId === 0) {
                 painelAdmin.classList.remove('hidden');
                 document.getElementById('btnAdminBloquear').onclick = () => mudarStatus('BLOQUEADO');
                 document.getElementById('btnAdminRevelar').onclick = () => mudarStatus('REVELADO');
             }
 
-            // Atualiza barra de status
             if(dadosSala.status === 'PALPITES') {
                 statusDiv.innerText = "🟢 Palpites Liberados";
                 statusDiv.className = "bg-green-500/20 text-green-400 text-center text-sm py-2 rounded-lg mb-4 font-bold border border-green-500/30";
             } else if (dadosSala.status === 'BLOQUEADO') {
-                statusDiv.innerText = "🔒 Bloqueado (Aguardando)";
+                statusDiv.innerText = "🔒 Bloqueado";
                 statusDiv.className = "bg-red-500/20 text-red-400 text-center text-sm py-2 rounded-lg mb-4 font-bold border border-red-500/30";
             } else if (dadosSala.status === 'REVELADO') {
                 calcularEExibirRanking();
-                return; // Para de renderizar a lista de jogo
+                return;
             }
-
             renderizarLista();
         }
 
         function renderizarLista() {
             const container = document.getElementById('lista-participantes');
             container.innerHTML = '';
-            
             const euParticipante = dadosSala.participantes.find(p => p.id === meuId);
             const meusPalpites = euParticipante ? euParticipante.palpites : {};
             
-            // Atualiza contador "Faltam X"
-            // Conta quantos participantes existem MENOS 1 (eu mesmo) MENOS quantos palpites já fiz
+            // Contador Faltam
             let totalPossivel = Math.max(0, dadosSala.participantes.length - 1);
             let feitos = 0;
-            // Verifica quantos dos meus palpites são válidos para pessoas que estão na sala
             for (const [key, value] of Object.entries(meusPalpites)) {
                 if (dadosSala.participantes.some(p => p.id == key)) feitos++;
             }
-            
             document.getElementById('dFaltam').innerText = Math.max(0, totalPossivel - feitos);
 
-            // Gera os cards
             dadosSala.participantes.forEach(p => {
-                // Lógica de visualização do palpite
                 const palpiteFeitoId = meusPalpites[p.id]; 
                 const palpitePessoa = palpiteFeitoId !== undefined ? dadosSala.participantes.find(x => x.id === palpiteFeitoId) : null;
                 
                 let htmlPalpite = `<span class="text-2xl text-gray-600">?</span>`;
-                if(palpitePessoa) {
-                    htmlPalpite = `<span class="font-bold text-green-400 truncate text-sm">${palpitePessoa.nome}</span>`;
-                }
+                if(palpitePessoa) htmlPalpite = `<span class="font-bold text-green-400 truncate text-sm">${palpitePessoa.nome}</span>`;
 
-                // Configurações de clique
                 let clickAttr = '';
                 let cursorClass = 'cursor-default opacity-60';
-                
-                // Só posso clicar se: Fase Palpites E não for eu mesmo
                 if(dadosSala.status === 'PALPITES' && p.id !== meuId) {
                      cursorClass = 'cursor-pointer hover:bg-white/10';
                      clickAttr = `data-id="${p.id}"`; 
@@ -351,24 +424,20 @@
                     </div>`;
             });
 
-            // Adiciona eventos de clique nos cards
             document.querySelectorAll('.card-palpite').forEach(el => {
-                el.addEventListener('click', (e) => {
+                el.addEventListener('click', () => {
                     const idAlvo = parseInt(el.getAttribute('data-id'));
                     if(!isNaN(idAlvo)) abrirSelecao(idAlvo);
                 });
             });
         }
 
-        // --- 8. SELEÇÃO DE PALPITE ---
         window.abrirSelecao = (idDeQuemTirou) => {
             const modal = document.getElementById('modal-selecao');
             const grid = document.getElementById('grid-opcoes');
             grid.innerHTML = '';
-            
             dadosSala.participantes.forEach(p => {
-                if(p.id === idDeQuemTirou) return; // Ninguém tira a si mesmo
-                
+                if(p.id === idDeQuemTirou) return; 
                 const btn = document.createElement('button');
                 btn.className = "flex flex-col items-center gap-2 p-2 rounded-xl bg-white/10 hover:bg-white/20 transition-all active:scale-95";
                 btn.innerHTML = `<div class="w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center text-white font-bold border-2 border-purple-400 shadow">${p.nome.substring(0,2).toUpperCase()}</div><span class="text-xs font-bold text-gray-300 truncate w-full text-center">${p.nome}</span>`;
@@ -380,83 +449,48 @@
 
         async function enviarPalpite(quemTirou, palpiteId) {
             document.getElementById('modal-selecao').classList.add('hidden');
-            
-            // Clona o array de participantes para editar
             const novaLista = [...dadosSala.participantes];
-            // Encontra meu índice
             const meuIndex = novaLista.findIndex(p => p.id === meuId);
-            
-            // Atualiza meu objeto de palpites
             if(!novaLista[meuIndex].palpites) novaLista[meuIndex].palpites = {};
             novaLista[meuIndex].palpites[quemTirou] = palpiteId;
-
-            // Envia update ao Firebase
-            try {
-                await updateDoc(doc(db, "salas", codigoSala), {
-                    participantes: novaLista
-                });
-            } catch(e) {
-                console.error("Erro ao salvar palpite:", e);
-                alert("Erro de conexão ao salvar.");
-            }
+            try { await updateDoc(doc(db, "salas", codigoSala), { participantes: novaLista }); } catch(e) { alert("Erro ao salvar."); }
         }
 
         async function mudarStatus(novoStatus) {
-            try {
-                await updateDoc(doc(db, "salas", codigoSala), { status: novoStatus });
-            } catch(e) {
-                alert("Erro ao mudar status.");
-            }
+            try { await updateDoc(doc(db, "salas", codigoSala), { status: novoStatus }); } catch(e) { alert("Erro status."); }
         }
 
-        // --- 9. RANKING E FINALIZAÇÃO ---
         function calcularEExibirRanking() {
             window.nav('tela-ranking');
             const container = document.getElementById('lista-ranking');
             const podio = document.getElementById('podio-area');
             container.innerHTML = '';
-            
             let ranking = [];
             
-            // Calcula pontos
             dadosSala.participantes.forEach(p => {
                 let pontos = 0;
-                let detalhes = [];
-                
                 if(p.palpites) {
                     for (const [quem, chute] of Object.entries(p.palpites)) {
-                        const correto = dadosSala.gabarito[quem];
-                        // Verifica se acertou
-                        if(parseInt(chute) === correto) pontos++;
+                        if(parseInt(chute) === dadosSala.gabarito[quem]) pontos++;
                     }
                 }
                 ranking.push({ nome: p.nome, pontos: pontos, palpites: p.palpites });
             });
-
-            // Ordena
             ranking.sort((a,b) => b.pontos - a.pontos);
 
-            // Monta Pódio (Top 3)
             podio.innerHTML = `
                 <div class="flex flex-col items-center"><div class="text-3xl mb-1">🥈</div><div class="bg-gray-400/20 p-2 rounded-t-lg h-24 flex items-end justify-center font-bold w-20 text-sm text-gray-300">${ranking[1]?.nome.split(' ')[0] || '-'}</div></div>
                 <div class="flex flex-col items-center -mt-4"><div class="text-4xl mb-1">🥇</div><div class="bg-yellow-400/20 border-2 border-yellow-400 p-2 rounded-t-lg h-32 flex items-end justify-center font-bold text-yellow-400 w-24 shadow-[0_0_15px_rgba(250,204,21,0.3)]">${ranking[0]?.nome.split(' ')[0] || '-'}</div></div>
                 <div class="flex flex-col items-center"><div class="text-3xl mb-1">🥉</div><div class="bg-orange-700/20 p-2 rounded-t-lg h-16 flex items-end justify-center font-bold w-20 text-sm text-orange-300">${ranking[2]?.nome.split(' ')[0] || '-'}</div></div>
             `;
 
-            // Monta Lista Completa
             ranking.forEach((r, idx) => {
-                // Detalhes da correção (Accordion)
                 let htmlDetalhes = '<div class="mt-4 grid grid-cols-1 gap-2 bg-black/20 p-3 rounded-xl">';
-                
-                // Mostra acertos e erros
                 dadosSala.participantes.forEach(p => {
                     const palpiteFeito = r.palpites ? r.palpites[p.id] : undefined;
                     const correto = dadosSala.gabarito[p.id];
                     const acertou = parseInt(palpiteFeito) === correto;
-                    
-                    // Nome de quem foi chutado
                     const nomeChutado = dadosSala.participantes.find(x=>x.id == palpiteFeito)?.nome || "?";
-                    
                     htmlDetalhes += `
                         <div class="flex justify-between text-xs border-b border-white/5 pb-1">
                             <span class="text-gray-400">${p.nome} tirou...</span>
