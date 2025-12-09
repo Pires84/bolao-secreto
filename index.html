@@ -44,14 +44,20 @@
             <p class="text-gray-300">Multiplayer Online</p>
         </div>
         
-        <div id="area-reconectar" class="w-full max-w-sm mb-4 hidden">
-            <button onclick="reconectarSessao()" class="w-full bg-green-500 hover:bg-green-400 text-white font-bold text-lg py-3 rounded-2xl shadow-lg border border-green-400 flex items-center justify-center gap-2 animate-pulse">
-                <i class="fa-solid fa-rotate-right"></i> VOLTAR PARA A SALA
+        <div id="area-reconectar" class="w-full max-w-sm mb-4 hidden bg-indigo-900/50 p-6 rounded-2xl border border-indigo-500 text-center">
+            <p class="text-gray-300 mb-2">Olá de volta, <span id="rec-nome" class="font-bold text-yellow-400">Usuario</span>!</p>
+            <p class="text-xs text-gray-400 mb-4">Você já está participando de uma sala.</p>
+            
+            <button onclick="reconectarSessao()" class="w-full bg-green-500 hover:bg-green-400 text-white font-bold text-lg py-3 rounded-xl shadow-lg border border-green-400 flex items-center justify-center gap-2 mb-3">
+                <i class="fa-solid fa-play"></i> VOLTAR PARA A SALA
             </button>
-            <p class="text-center text-xs text-gray-500 mt-2">Você já estava num jogo.</p>
+            
+            <button onclick="sairDaSala()" class="text-red-400 text-xs hover:text-red-300 underline">
+                Não sou eu / Sair da conta
+            </button>
         </div>
 
-        <div class="w-full max-w-sm space-y-4">
+        <div id="area-botoes-iniciais" class="w-full max-w-sm space-y-4">
             <button onclick="nav('tela-criar')" class="w-full bg-yellow-400 hover:bg-yellow-300 text-purple-900 font-bold text-xl py-4 rounded-2xl shadow-lg flex items-center justify-center gap-3"><i class="fa-solid fa-plus-circle"></i> CRIAR SALA</button>
             <button onclick="nav('tela-entrar')" class="w-full bg-indigo-800 hover:bg-indigo-700 text-white font-bold text-xl py-4 rounded-2xl shadow-lg border border-indigo-600 flex items-center justify-center gap-3"><i class="fa-solid fa-ticket"></i> ENTRAR</button>
         </div>
@@ -107,10 +113,10 @@
             </div>
             
             <div class="grid grid-cols-2 gap-2 mt-4 relative z-10">
-                <button id="btnCompartilhar" class="bg-indigo-600 hover:bg-indigo-500 py-2 rounded-lg text-xs text-white font-bold flex items-center justify-center gap-2 transition-colors">
+                <button id="btnCompartilhar" class="hidden bg-indigo-600 hover:bg-indigo-500 py-2 rounded-lg text-xs text-white font-bold flex items-center justify-center gap-2 transition-colors">
                     <i class="fa-brands fa-whatsapp text-lg"></i> Convidar
                 </button>
-                <button id="btnPix" class="bg-gray-700 hover:bg-gray-600 py-2 rounded-lg text-xs text-gray-200 flex items-center justify-center gap-2 transition-colors">
+                <button id="btnPix" class="col-span-2 bg-gray-700 hover:bg-gray-600 py-2 rounded-lg text-xs text-gray-200 flex items-center justify-center gap-2 transition-colors">
                     <i class="fa-brands fa-pix"></i> Pagar
                 </button>
             </div>
@@ -152,7 +158,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
         import { getFirestore, doc, setDoc, getDoc, onSnapshot, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
-        // SUAS CHAVES DO FIREBASE JÁ INSERIDAS:
         const firebaseConfig = {
             apiKey: "AIzaSyBenlc9jAuGq1zsbXuraG40Vzu0bu3PT0g",
             authDomain: "bolao-secreto.firebaseapp.com",
@@ -162,7 +167,6 @@
             appId: "1:686832695980:web:d88b70dea07b1e3f08bd09"
         };
 
-        // --- INICIALIZAÇÃO ---
         let app, db;
         try {
             app = initializeApp(firebaseConfig);
@@ -170,21 +174,24 @@
             console.log("Firebase OK");
         } catch (e) { alert("Erro config Firebase"); }
 
-        // --- VARIÁVEIS ---
         let dadosSala = null;
         let meuId = null; 
         let meuNome = null;
         let codigoSala = null;
         let unsubscribe = null; 
 
-        // --- VERIFICAÇÃO DE SESSÃO (PERSISTÊNCIA) ---
+        // --- 1. VERIFICAÇÃO DE SESSÃO (CORREÇÃO DE UX) ---
+        // Se houver login, ESCONDE os botões de entrar e MOSTRA o de reconectar
         window.addEventListener('load', () => {
             const sessao = localStorage.getItem('bolao_sessao');
             if(sessao) {
                 const dados = JSON.parse(sessao);
-                document.getElementById('area-reconectar').classList.remove('hidden');
-                // Opcional: Auto-conectar direto (comentei para dar opção de voltar)
-                // reconectarSessao(); 
+                document.getElementById('area-botoes-iniciais').classList.add('hidden'); // Esconde Criar/Entrar
+                document.getElementById('area-reconectar').classList.remove('hidden'); // Mostra "Voltar"
+                document.getElementById('rec-nome').innerText = dados.nome;
+            } else {
+                document.getElementById('area-botoes-iniciais').classList.remove('hidden');
+                document.getElementById('area-reconectar').classList.add('hidden');
             }
         });
 
@@ -192,7 +199,6 @@
             const sessao = JSON.parse(localStorage.getItem('bolao_sessao'));
             if(sessao && sessao.codigo && sessao.id !== null) {
                 mostrarLoading(true, "Reconectando...");
-                // Verifica se sala ainda existe
                 try {
                     const docSnap = await getDoc(doc(db, "salas", sessao.codigo));
                     if(docSnap.exists()) {
@@ -203,17 +209,15 @@
                     }
                 } catch(e) {
                     mostrarLoading(false);
-                    alert("Erro ao reconectar.");
+                    alert("Erro ao reconectar. Verifique sua internet.");
                 }
             }
         };
 
         window.sairDaSala = () => {
-            if(confirm("Deseja sair da sala? Você precisará do código para entrar novamente.")) {
-                if(unsubscribe) unsubscribe(); // Para de ouvir o firebase
-                localStorage.removeItem('bolao_sessao'); // Limpa memória
-                location.reload(); // Recarrega página
-            }
+            if(unsubscribe) unsubscribe(); 
+            localStorage.removeItem('bolao_sessao');
+            location.reload(); 
         };
 
         // --- NAVEGAÇÃO ---
@@ -228,24 +232,16 @@
             if(show) el.classList.remove('hidden'); else el.classList.add('hidden');
         }
 
-        // --- BOTÃO COMPARTILHAR ---
+        // --- BOTÃO COMPARTILHAR (SÓ ADMIN) ---
         document.getElementById('btnCompartilhar').addEventListener('click', async () => {
-            const url = window.location.href; // Pega o link atual do site
-            const textoShare = `🎁 Bolão Amigo Secreto!\nEntra na minha sala: *${codigoSala}*\nAcede aqui: ${url}`;
+            const url = window.location.href; 
+            const textoShare = `🎁 Bolão Amigo Secreto!\nCódigo da sala: *${codigoSala}*\nAcede aqui: ${url}`;
             
-            // Tenta usar a API nativa do telemóvel
             if (navigator.share) {
-                try {
-                    await navigator.share({
-                        title: 'Bolão Secreto',
-                        text: textoShare,
-                        url: url
-                    });
-                } catch (err) { console.log('Cancelado'); }
+                try { await navigator.share({ title: 'Bolão Secreto', text: textoShare, url: url }); } catch (err) { }
             } else {
-                // Fallback: Copia para clipboard e avisa
                 navigator.clipboard.writeText(textoShare);
-                alert("Link e convite copiados! Cole no WhatsApp.");
+                alert("Convite copiado! Cole no WhatsApp.");
             }
         });
 
@@ -295,20 +291,9 @@
                 if (docSnap.exists()) {
                     const dados = docSnap.data();
                     
-                    // Verifica se esse nome JÁ existe na sala (Recuperação manual)
-                    const usuarioExistente = dados.participantes.find(p => p.nome.toUpperCase() === nome.toUpperCase());
+                    // Verifica duplicidade APENAS se o usuário não tiver sessão válida
+                    // (Se tiver sessão, ele nem vê essa tela, vê o botão de reconectar)
                     
-                    if(usuarioExistente) {
-                        // Se o nome já existe, assume que é a mesma pessoa voltando
-                        if(confirm(`Já existe um "${usuarioExistente.nome}" na sala. É você?`)) {
-                            entrarNaSala(codigo, usuarioExistente.id, usuarioExistente.nome);
-                            return;
-                        } else {
-                            mostrarLoading(false);
-                            return alert("Escolha outro nome.");
-                        }
-                    }
-
                     if (dados.participantes.length >= dados.qtdMax) {
                         mostrarLoading(false);
                         return alert("Sala lotada!");
@@ -330,7 +315,6 @@
             meuId = id;
             meuNome = nome;
 
-            // SALVAR SESSÃO NO NAVEGADOR (LocalStorage)
             localStorage.setItem('bolao_sessao', JSON.stringify({ codigo, id, nome }));
 
             document.getElementById('dCodigo').innerText = codigo;
@@ -338,7 +322,7 @@
             mostrarLoading(false);
             window.nav('tela-jogo');
 
-            if(unsubscribe) unsubscribe(); // Limpa listener anterior se houver
+            if(unsubscribe) unsubscribe(); 
             unsubscribe = onSnapshot(doc(db, "salas", codigo), (doc) => {
                 if(doc.exists()) {
                     dadosSala = doc.data();
@@ -361,11 +345,21 @@
 
             const statusDiv = document.getElementById('status-bar');
             const painelAdmin = document.getElementById('painel-admin');
+            const btnCompartilhar = document.getElementById('btnCompartilhar');
+            const btnPix = document.getElementById('btnPix');
             
+            // LÓGICA DE ADMIN (MOSTRAR COMPARTILHAR)
             if(meuId === 0) {
                 painelAdmin.classList.remove('hidden');
+                btnCompartilhar.classList.remove('hidden'); // Mostra botão
+                btnPix.classList.remove('col-span-2'); // Ajusta layout
+                
                 document.getElementById('btnAdminBloquear').onclick = () => mudarStatus('BLOQUEADO');
                 document.getElementById('btnAdminRevelar').onclick = () => mudarStatus('REVELADO');
+            } else {
+                painelAdmin.classList.add('hidden');
+                btnCompartilhar.classList.add('hidden'); // Esconde botão
+                btnPix.classList.add('col-span-2'); // Ocupa largura total
             }
 
             if(dadosSala.status === 'PALPITES') {
@@ -387,7 +381,6 @@
             const euParticipante = dadosSala.participantes.find(p => p.id === meuId);
             const meusPalpites = euParticipante ? euParticipante.palpites : {};
             
-            // Contador Faltam
             let totalPossivel = Math.max(0, dadosSala.participantes.length - 1);
             let feitos = 0;
             for (const [key, value] of Object.entries(meusPalpites)) {
